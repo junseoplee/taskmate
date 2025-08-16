@@ -95,7 +95,7 @@
 **예상 소요시간**: 8-10일  
 **우선순위**: HIGH  
 **의존성**: Phase 1 완료 ✅  
-**현재 상태**: User Service 기본 모델 완료, AuthController 구현 진행 중
+**현재 상태**: User Service AuthController 구현 완료 (70% 완료)
 
 TDD 기반 마이크로서비스 개발로 세션 기반 인증 시스템과 태스크 관리 기능을 구현합니다.
 
@@ -110,6 +110,16 @@ TDD 기반 마이크로서비스 개발로 세션 기반 인증 시스템과 태
 - ✅ FactoryBot 팩토리 설정 (User, Session)
 - ✅ RSpec 테스트 환경 구성 (SimpleCov, 헬퍼 모듈)
 - ✅ PostgreSQL 연결 설정 (user_service_db)
+- ✅ AuthController TDD 구현 완료 (26개 테스트 통과)
+- ✅ 인증 API 4개 엔드포인트 구현
+  - `POST /api/v1/auth/register` - 회원가입
+  - `POST /api/v1/auth/login` - 로그인
+  - `POST /api/v1/auth/logout` - 로그아웃
+  - `GET /api/v1/auth/verify` - 세션 검증 (서비스 간 통신용)
+- ✅ ApplicationController에 쿠키 지원 추가
+- ✅ 보안 기능 구현 (HttpOnly 쿠키, 세션 만료, 자동 정리)
+- ✅ API 테스트 스크립트 작성 (`test_api.sh`)
+- ✅ 모노레포 구조 및 개발 가이드 문서화
 
 **Phase 2 성공 기준**:
 - 테스트 커버리지 80% 이상
@@ -126,7 +136,7 @@ cd services/user-service
 rails new . --api --database=postgresql --skip-test
 ```
 
-**2.1.2 인증 시스템 구현** - ✅ 모델 계층 완료
+**2.1.2 인증 시스템 구현** - ✅ 완료
 - ✅ User 모델 생성
   - `email`, `password_digest`, `name`, `created_at`, `updated_at`
   - BCrypt 패스워드 암호화
@@ -134,19 +144,20 @@ rails new . --api --database=postgresql --skip-test
 - ✅ Session 모델 생성
   - `user_id`, `token`, `expires_at`, `created_at`
   - 자동 만료 처리
-- [ ] AuthController 생성 ← **다음 단계**
-  - `POST /auth/login` - 로그인 (세션 생성)
-  - `POST /auth/logout` - 로그아웃 (세션 삭제)
-  - `POST /auth/register` - 회원가입
-  - `GET /auth/verify` - 세션 검증 API (다른 서비스용)
+- ✅ AuthController 생성
+  - `POST /api/v1/auth/register` - 회원가입
+  - `POST /api/v1/auth/login` - 로그인 (세션 생성)
+  - `POST /api/v1/auth/logout` - 로그아웃 (세션 삭제)
+  - `GET /api/v1/auth/verify` - 세션 검증 API (서비스 간 통신용)
+  - 26개 테스트 모두 통과, TDD 완료
 
-**2.1.3 API 엔드포인트 구현** - 대기 중
-- [ ] UsersController 생성
-  - `GET /users/profile` - 프로필 조회
-  - `PUT /users/profile` - 프로필 수정
-- [ ] 인증 미들웨어 구현
-- [ ] CORS 설정 (다른 서비스 호출 허용)
-- [ ] API 응답 형식 표준화
+**2.1.3 API 엔드포인트 구현** - ✅ 기본 완료, 확장 예정
+- ✅ 인증 미들웨어 구현 (`require_session`)
+- ✅ API 응답 형식 표준화 (JSON, 성공/실패 구조)
+- ✅ CORS 설정 (ActionController::Cookies 포함)
+- [ ] UsersController 생성 ← **다음 단계**
+  - `GET /api/v1/users/profile` - 프로필 조회
+  - `PUT /api/v1/users/profile` - 프로필 수정
 
 **2.1.4 데이터베이스 및 환경 설정** - ✅ 완료
 - ✅ `database.yml` 설정 (database: user_service_db, host: localhost, port: 5432)
@@ -157,8 +168,11 @@ rails new . --api --database=postgresql --skip-test
 **테스트 현황**:
 - ✅ User 모델: 15개 테스트 모두 통과
 - ✅ Session 모델: 12개 테스트 모두 통과
+- ✅ AuthController: 26개 테스트 모두 통과
+- ✅ 전체 테스트: 53개 모두 통과 (91.75% 코드 커버리지)
 - ✅ 연관관계: User ↔ Session 관계 정상 작동
 - ✅ TDD 사이클 완료: Red → Green → Refactor
+- ✅ API 통합 테스트 완료 (회원가입→로그인→검증→로그아웃)
 
 #### 2.2 Task Service 개발 (3-4일)
 **포트**: 3001, **DB**: task_service_db (공유 PostgreSQL)
@@ -532,14 +546,14 @@ rails new . --api --database=postgresql --skip-test
 - ✅ PostgreSQL, Redis 연결 확인
 - ✅ 상세 문서화 및 실행 계획 수립
 
-### 🎯 Phase 2 완료 기준 (50% 진행 - 모델 계층 완료)
+### 🎯 Phase 2 완료 기준 (70% 진행 - User Service 완료)
 - ✅ User/Session 모델 TDD 구현 완료 (테스트 27개 통과)
-- [ ] 회원가입/로그인 API 정상 동작 ← **다음 단계**
-- [ ] 태스크 CRUD API 정상 동작
-- [ ] 서비스 간 인증 검증 정상 동작
-- [ ] 통합 테스트 90% 이상 통과
-- [ ] API 응답 시간 < 200ms
-- ✅ 모델 계층 테스트 커버리지 70%+ 달성
+- ✅ 회원가입/로그인 API 정상 동작 (26개 테스트 통과)
+- ✅ 서비스 간 인증 검증 API 구현 (`/api/v1/auth/verify`)
+- [ ] 태스크 CRUD API 정상 동작 ← **다음 단계**
+- [ ] 서비스 간 통합 테스트 완료
+- [ ] API 응답 시간 < 200ms 검증
+- ✅ 테스트 커버리지 91.75% 달성 (목표 80% 초과)
 
 ### 🏆 최종 성공 지표
 - [ ] **기능 완성도**

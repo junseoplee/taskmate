@@ -209,6 +209,84 @@ chore(docker): 멀티 데이터베이스 PostgreSQL 설정 추가
    - All tests should pass after each commit
    - Commit related files together
 
+## Pre-Commit Testing Protocol
+
+**⚠️ MANDATORY**: Always run tests before committing and ensure they pass.
+
+### Required Testing Steps Before Every Commit
+
+1. **Run All Tests**: Execute complete test suite for affected services
+2. **Verify Pass Rate**: Ensure 100% test pass rate (no failures, no errors)
+3. **Check Coverage**: Maintain minimum 80% code coverage
+4. **Lint Check**: Run code quality checks if available
+5. **PROJECT_PLAN Update**: Update docs/PROJECT_PLAN.md to reflect current progress
+
+### Testing Commands by Service
+
+```bash
+# User Service Tests (recommended)
+cd services/user-service
+./pre_commit_check.sh  # 자동화된 전체 검증
+
+# 또는 개별 실행
+bundle exec rspec      # 테스트 실행
+bundle exec rubocop    # 코드 스타일 검사
+
+# Task Service Tests (when available)
+cd services/task-service  
+bundle exec rspec
+
+# Full Project Tests
+./scripts/test.sh
+```
+
+### PROJECT_PLAN.md 업데이트 프로토콜
+
+**모든 기능 구현 후 필수 업데이트:**
+1. **완료 상태 반영**: `[ ]` → `✅` 체크박스 변경
+2. **진행률 업데이트**: Phase 진행률 퍼센트 수정
+3. **테스트 현황**: 새로운 테스트 수, 커버리지 반영
+4. **다음 단계**: `← **다음 단계**` 표시 이동
+5. **기능 명세**: 새로 구현된 API/기능 추가
+
+### Commit Rejection Criteria
+
+**DO NOT COMMIT** if any of the following occur:
+- ❌ Any test failures or errors
+- ❌ Coverage drops below 80%
+- ❌ Syntax errors or linting failures
+- ❌ Database migration issues
+- ❌ PROJECT_PLAN.md not updated for feature changes
+
+### Emergency Override
+
+Only in exceptional circumstances (documentation-only changes, infrastructure setup), 
+commits may proceed without full testing. Must include `[skip-tests]` in commit message.
+
+Example:
+```bash
+docs: README 구조 개선 [skip-tests]
+
+순수 문서 변경으로 테스트 영향 없음
+```
+
+### Commit Message Protocol
+
+Follow conventional commit format with Korean descriptions:
+
+```bash
+<type>(<scope>): <한글 제목>
+
+<한글 상세 설명>
+- 주요 변경사항 리스트
+- 구현된 기능 설명
+
+🧪 테스트 결과: N개 테스트 모두 통과
+📊 커버리지: XX.XX%
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
 ## Important Notes
 
 - This is a graduation project for demonstration purposes

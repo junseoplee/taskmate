@@ -91,19 +91,25 @@
 - ✅ Docker 컨테이너 헬스체크 통과
 - ✅ 개발 스크립트 동작 확인
 
-### ⏳ Phase 2: 핵심 서비스 개발 (User + Task) - 준비 완료
+### 🔄 Phase 2: 핵심 서비스 개발 (User + Task) - 진행 중 (2025-08-16)
 **예상 소요시간**: 8-10일  
 **우선순위**: HIGH  
 **의존성**: Phase 1 완료 ✅  
-**준비 상태**: 문서화 완료, 실행 계획 수립
+**현재 상태**: User Service 기본 모델 완료, AuthController 구현 진행 중
 
 TDD 기반 마이크로서비스 개발로 세션 기반 인증 시스템과 태스크 관리 기능을 구현합니다.
 
-**준비 완료 사항**:
+**완료된 사항**:
 - ✅ TDD 가이드라인 수립 (`docs/TDD_GUIDE.md`)
 - ✅ 상세 실행 계획 작성 (`docs/PHASE2_EXECUTION_PLAN.md`)
 - ✅ API 명세서 작성 (`docs/API_SPECIFICATION.md`)
 - ✅ 테스트 전략 및 환경 설정 완료
+- ✅ User Service 프로젝트 구조 생성 및 기본 설정 완료
+- ✅ User 모델 TDD 구현 완료 (BCrypt, 이메일 검증, 세션 연관관계)
+- ✅ Session 모델 TDD 구현 완료 (UUID 토큰, 자동 만료, 정리 기능)
+- ✅ FactoryBot 팩토리 설정 (User, Session)
+- ✅ RSpec 테스트 환경 구성 (SimpleCov, 헬퍼 모듈)
+- ✅ PostgreSQL 연결 설정 (user_service_db)
 
 **Phase 2 성공 기준**:
 - 테스트 커버리지 80% 이상
@@ -111,30 +117,30 @@ TDD 기반 마이크로서비스 개발로 세션 기반 인증 시스템과 태
 - 서비스 간 통신 정상 동작
 - 회원가입/로그인/태스크 CRUD 기능 완성
 
-#### 2.1 User Service 개발 (3-4일)
+#### 2.1 User Service 개발 (3-4일) - ✅ 2일 완료
 **포트**: 3000, **DB**: user_service_db (공유 PostgreSQL)
 
-**2.1.1 프로젝트 구조 생성**
+**2.1.1 프로젝트 구조 생성** - ✅ 완료
 ```bash
 cd services/user-service
 rails new . --api --database=postgresql --skip-test
 ```
 
-**2.1.2 인증 시스템 구현**
-- [ ] User 모델 생성
+**2.1.2 인증 시스템 구현** - ✅ 모델 계층 완료
+- ✅ User 모델 생성
   - `email`, `password_digest`, `name`, `created_at`, `updated_at`
   - BCrypt 패스워드 암호화
   - 이메일 유효성 검증
-- [ ] Session 모델 생성
+- ✅ Session 모델 생성
   - `user_id`, `token`, `expires_at`, `created_at`
   - 자동 만료 처리
-- [ ] AuthController 생성
+- [ ] AuthController 생성 ← **다음 단계**
   - `POST /auth/login` - 로그인 (세션 생성)
   - `POST /auth/logout` - 로그아웃 (세션 삭제)
   - `POST /auth/register` - 회원가입
   - `GET /auth/verify` - 세션 검증 API (다른 서비스용)
 
-**2.1.3 API 엔드포인트 구현**
+**2.1.3 API 엔드포인트 구현** - 대기 중
 - [ ] UsersController 생성
   - `GET /users/profile` - 프로필 조회
   - `PUT /users/profile` - 프로필 수정
@@ -142,11 +148,17 @@ rails new . --api --database=postgresql --skip-test
 - [ ] CORS 설정 (다른 서비스 호출 허용)
 - [ ] API 응답 형식 표준화
 
-**2.1.4 데이터베이스 및 환경 설정**
-- [ ] `database.yml` 설정 (database: user_service_db, host: localhost, port: 5432)
-- [ ] 마이그레이션 실행
+**2.1.4 데이터베이스 및 환경 설정** - ✅ 완료
+- ✅ `database.yml` 설정 (database: user_service_db, host: localhost, port: 5432)
+- ✅ 마이그레이션 실행 (User, Session 테이블 생성)
 - [ ] Seeds 데이터 생성 (테스트 사용자)
-- [ ] 환경변수 설정
+- ✅ 환경변수 설정
+
+**테스트 현황**:
+- ✅ User 모델: 15개 테스트 모두 통과
+- ✅ Session 모델: 12개 테스트 모두 통과
+- ✅ 연관관계: User ↔ Session 관계 정상 작동
+- ✅ TDD 사이클 완료: Red → Green → Refactor
 
 #### 2.2 Task Service 개발 (3-4일)
 **포트**: 3001, **DB**: task_service_db (공유 PostgreSQL)
@@ -520,13 +532,14 @@ rails new . --api --database=postgresql --skip-test
 - ✅ PostgreSQL, Redis 연결 확인
 - ✅ 상세 문서화 및 실행 계획 수립
 
-### 🎯 Phase 2 완료 기준 (진행 예정)
-- [ ] 회원가입/로그인 API 정상 동작
+### 🎯 Phase 2 완료 기준 (50% 진행 - 모델 계층 완료)
+- ✅ User/Session 모델 TDD 구현 완료 (테스트 27개 통과)
+- [ ] 회원가입/로그인 API 정상 동작 ← **다음 단계**
 - [ ] 태스크 CRUD API 정상 동작
 - [ ] 서비스 간 인증 검증 정상 동작
 - [ ] 통합 테스트 90% 이상 통과
 - [ ] API 응답 시간 < 200ms
-- [ ] 테스트 커버리지 80% 이상
+- ✅ 모델 계층 테스트 커버리지 70%+ 달성
 
 ### 🏆 최종 성공 지표
 - [ ] **기능 완성도**

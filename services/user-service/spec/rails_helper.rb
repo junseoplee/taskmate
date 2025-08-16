@@ -43,12 +43,12 @@ begin
     add_filter '/spec/'
     add_filter '/config/'
     add_filter '/vendor/'
-    
+
     add_group 'Models', 'app/models'
     add_group 'Controllers', 'app/controllers'
     add_group 'Services', 'app/services'
     add_group 'Libraries', 'lib'
-    
+
     minimum_coverage 80
   end
 rescue LoadError
@@ -67,7 +67,7 @@ RSpec.configure do |config|
   # Database Cleaner가 있으면 사용, 없으면 transactional fixtures 사용
   if defined?(DatabaseCleaner)
     config.use_transactional_fixtures = false
-    
+
     config.before(:suite) do
       DatabaseCleaner.clean_with(:truncation)
     end
@@ -76,7 +76,7 @@ RSpec.configure do |config|
       DatabaseCleaner.strategy = :transaction
     end
 
-    config.before(:each, :js => true) do
+    config.before(:each, js: true) do
       DatabaseCleaner.strategy = :truncation
     end
 
@@ -90,21 +90,21 @@ RSpec.configure do |config|
   else
     config.use_transactional_fixtures = true
   end
-  
+
   # Timecop 정리 (있으면)
   if defined?(Timecop)
     config.after(:each) do
       Timecop.return
     end
   end
-  
+
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')
   ]
 
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
-  
+
   # 공통 헬퍼 메서드
   config.include ActiveSupport::Testing::TimeHelpers
 end

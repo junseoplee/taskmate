@@ -7,7 +7,7 @@ RSpec.describe User, type: :model do
 
   describe 'validations' do
     subject { build(:user) }
-    
+
     it { should validate_presence_of(:email) }
     it { should validate_uniqueness_of(:email).case_insensitive }
     it { should validate_presence_of(:name) }
@@ -23,7 +23,7 @@ RSpec.describe User, type: :model do
         test.user@domain.co.kr
         user+tag@example.org
       ]
-      
+
       valid_emails.each do |email|
         user = build(:user, email: email)
         expect(user).to be_valid
@@ -37,7 +37,7 @@ RSpec.describe User, type: :model do
         missing@.com
         missing.domain@.com
       ]
-      
+
       invalid_emails.each do |email|
         user = build(:user, email: email)
         expect(user).not_to be_valid

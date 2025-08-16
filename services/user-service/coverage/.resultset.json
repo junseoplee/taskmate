@@ -1,31 +1,40 @@
 {
   "RSpec": {
     "coverage": {
-      "/Users/junseop/Documents/work/taskmate/services/user-service/app/models/user.rb": {
+      "/Users/junseop/Documents/work/taskmate/services/user-service/app/models/session.rb": {
         "lines": [
           1,
           1,
-          1,
-          null,
-          1,
-          1,
-          1,
-          26,
-          null,
-          1,
           null,
           1,
           1,
           null,
+          19,
+          19,
+          null,
+          3,
+          4,
           null,
           1,
           2,
           null,
           null,
           1,
+          1,
+          null,
           null,
           1,
-          7,
+          1,
+          null,
+          null,
+          1,
+          null,
+          1,
+          2,
+          null,
+          null,
+          1,
+          1,
           null,
           null
         ]
@@ -37,40 +46,31 @@
           null
         ]
       },
-      "/Users/junseop/Documents/work/taskmate/services/user-service/app/models/session.rb": {
+      "/Users/junseop/Documents/work/taskmate/services/user-service/app/models/user.rb": {
         "lines": [
           1,
           1,
+          1,
+          null,
+          1,
+          1,
+          1,
+          43,
+          null,
+          1,
           null,
           1,
           1,
           null,
+          null,
+          1,
           2,
-          2,
-          null,
-          1,
-          1,
-          null,
-          1,
-          0,
-          null,
-          null,
-          1,
-          0,
-          null,
-          null,
-          1,
-          0,
           null,
           null,
           1,
           null,
           1,
-          0,
-          null,
-          null,
-          1,
-          0,
+          24,
           null,
           null
         ]
@@ -104,6 +104,6 @@
         "branches": {}
       }
     },
-    "timestamp": 1755342639
+    "timestamp": 1755345809
   }
 }

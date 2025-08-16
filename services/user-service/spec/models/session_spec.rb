@@ -7,9 +7,9 @@ RSpec.describe Session, type: :model do
 
   describe 'validations' do
     subject { build(:session) }
-    
+
     it { should validate_uniqueness_of(:token) }
-    
+
     it 'validates presence of token after skipping callbacks' do
       session = Session.new(user: create(:user))
       session.save(validate: false)  # 콜백 실행
@@ -17,7 +17,7 @@ RSpec.describe Session, type: :model do
       expect(session).not_to be_valid
       expect(session.errors[:token]).to include("can't be blank")
     end
-    
+
     it 'validates presence of expires_at after skipping callbacks' do
       session = Session.new(user: create(:user))
       session.save(validate: false)  # 콜백 실행
@@ -32,7 +32,7 @@ RSpec.describe Session, type: :model do
       it 'generates a unique token when token is blank' do
         user = create(:user)
         session = Session.new(user: user, expires_at: 24.hours.from_now)
-        
+
         expect(session.token).to be_blank
         session.save!
         expect(session.token).to be_present
@@ -86,7 +86,7 @@ RSpec.describe Session, type: :model do
       it 'extends session expiry by 24 hours' do
         session = create(:session)
         original_expiry = session.expires_at
-        
+
         travel_to 1.hour.from_now do
           session.extend_expiry!
           expect(session.expires_at).to be > original_expiry

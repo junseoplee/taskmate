@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database with multiple databases support
+  postgres:
+    image: postgres:15
+    container_name: taskmate_postgres
+    environment:
+      POSTGRES_USER: taskmate
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+      POSTGRES_MULTIPLE_DATABASES: user_service_db,task_service_db,analytics_service_db,file_service_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/create-multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/create-multiple-postgresql-databases.sh
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskmate"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis for session management and caching
+  redis:
+    image: redis:7-alpine
+    container_name: taskmate_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # User Service
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: ../../docker/development/Dockerfile.rails
+    container_name: taskmate_user_service
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgresql://taskmate:password@postgres:5432/user_service_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/user-service:/app
+      - user_service_bundle:/usr/local/bundle
+    profiles:
+      - services
+
+  # Task Service  
+  task-service:
+    build:
+      context: ./services/task-service
+      dockerfile: ../../docker/development/Dockerfile.rails
+    container_name: taskmate_task_service
+    ports:
+      - "3001:3001"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgresql://taskmate:password@postgres:5432/task_service_db
+      - REDIS_URL=redis://redis:6379/1
+      - USER_SERVICE_URL=http://user-service:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/task-service:/app
+      - task_service_bundle:/usr/local/bundle
+    profiles:
+      - services
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: ../../docker/development/Dockerfile.rails
+    container_name: taskmate_analytics_service
+    ports:
+      - "3002:3002"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgresql://taskmate:password@postgres:5432/analytics_service_db
+      - REDIS_URL=redis://redis:6379/2
+      - USER_SERVICE_URL=http://user-service:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/analytics-service:/app
+      - analytics_service_bundle:/usr/local/bundle
+    profiles:
+      - services
+
+  # File Service
+  file-service:
+    build:
+      context: ./services/file-service
+      dockerfile: ../../docker/development/Dockerfile.rails
+    container_name: taskmate_file_service
+    ports:
+      - "3003:3003"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgresql://taskmate:password@postgres:5432/file_service_db
+      - REDIS_URL=redis://redis:6379/3
+      - USER_SERVICE_URL=http://user-service:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/file-service:/app
+      - file_service_bundle:/usr/local/bundle
+      - file_uploads:/app/storage
+    profiles:
+      - services
+
+volumes:
+  postgres_data:
+  redis_data:
+  user_service_bundle:
+  task_service_bundle:
+  analytics_service_bundle:
+  file_service_bundle:
+  file_uploads:
+
+networks:
+  default:
+    name: taskmate_network

@@ -102,6 +102,113 @@ bin/dev
 - Descriptive commit messages
 - Regular commits with atomic changes
 
+### Git Commit Convention
+
+**MANDATORY**: Follow conventional commit format for all commits in this repository.
+
+#### Commit Message Format
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+#### Commit Types
+- **feat**: New feature implementation
+- **fix**: Bug fixes
+- **docs**: Documentation changes only
+- **style**: Code style changes (formatting, missing semicolons, etc.)
+- **refactor**: Code changes that neither fixes a bug nor adds a feature
+- **perf**: Performance improvements
+- **test**: Adding or updating tests
+- **chore**: Build process or auxiliary tool changes
+- **ci**: CI/CD pipeline changes
+
+#### Scope Examples
+- **user-service**: Changes to User Service
+- **task-service**: Changes to Task Service  
+- **analytics-service**: Changes to Analytics Service
+- **file-service**: Changes to File Service
+- **docker**: Docker configuration changes
+- **k8s**: Kubernetes configuration changes
+- **docs**: Documentation updates
+- **config**: Configuration file changes
+
+#### Examples (한글 커밋 메시지)
+```bash
+# 기능 추가
+feat(user-service): 사용자 인증 시스템 구현
+
+회원가입, 로그인, 세션 관리 기능 추가
+- BCrypt 패스워드 암호화를 사용한 User 모델 추가
+- 로그인/로그아웃 엔드포인트를 포함한 AuthController 구현
+- 세션 기반 인증 미들웨어 추가
+- RSpec 테스트 포함
+
+Closes #123
+
+# 버그 수정
+fix(task-service): 태스크 상태 업데이트 검증 오류 해결
+
+'pending'에서 'completed'로의 상태 전환을 막던 검증 로직 수정
+- Task 모델 상태 머신 검증 업데이트
+- 엣지 케이스에 대한 테스트 케이스 추가
+
+# 문서화
+docs: 최적화된 데이터베이스 구성으로 PROJECT_PLAN 업데이트
+
+- 여러 PostgreSQL 인스턴스에서 단일 인스턴스 멀티 DB로 변경
+- Phase 1-2 구현 태스크와 예상 시간 상세 추가
+- 기술적 결정 사항과 성공 기준 추가
+- 개발 워크플로우와 리소스 효율성 개선
+
+# Docker 설정
+chore(docker): 멀티 데이터베이스 PostgreSQL 설정 추가
+
+- PostgreSQL과 Redis 서비스를 포함한 docker-compose.yml 추가
+- 멀티 데이터베이스 생성 스크립트 작성
+- 개발 환경 변수 설정
+```
+
+#### Commit Guidelines (한글 사용)
+1. **제목 (50자 이내)**:
+   - 타입은 영어, 설명은 한글 사용
+   - 명령형으로 작성 ("추가", "수정", "삭제" 등)
+   - 마침표 없음
+
+2. **본문 (줄당 72자)**:
+   - 무엇을 왜 했는지 설명 (어떻게는 생략)
+   - 여러 변경사항은 불릿 포인트 사용
+   - 복잡한 변경사항은 상세 설명 포함
+
+3. **푸터**:
+   - 이슈 참조: `Closes #123`, `Fixes #456`
+   - 브레이킹 체인지: `BREAKING CHANGE: 설명`
+   - 공동 작성자: `Co-Authored-By: Claude <noreply@anthropic.com>`
+
+#### Commit Guidelines
+1. **Subject Line (50 chars max)**:
+   - Use imperative mood ("add", not "added" or "adds")
+   - No capitalization of first letter after type
+   - No period at the end
+
+2. **Body (72 chars per line)**:
+   - Explain what and why vs. how
+   - Use bullet points for multiple changes
+   - Include context for complex changes
+
+3. **Footer**:
+   - Reference issues: `Closes #123`, `Fixes #456`
+   - Breaking changes: `BREAKING CHANGE: description`
+   - Co-authors: `Co-Authored-By: Claude <noreply@anthropic.com>`
+
+4. **Atomic Commits**:
+   - One logical change per commit
+   - All tests should pass after each commit
+   - Commit related files together
+
 ## Important Notes
 
 - This is a graduation project for demonstration purposes

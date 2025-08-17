@@ -10,7 +10,8 @@ class Api::V1::AuthController < ApplicationController
 
       render json: {
         success: true,
-        user: user_response(user)
+        user: user_response(user),
+        session_token: session.token
       }, status: :created
     else
       render json: {
@@ -33,7 +34,8 @@ class Api::V1::AuthController < ApplicationController
 
       render json: {
         success: true,
-        user: user_response(user)
+        user: user_response(user),
+        session_token: session.token
       }, status: :ok
     else
       render json: {
@@ -67,7 +69,8 @@ class Api::V1::AuthController < ApplicationController
 
       render json: {
         success: true,
-        user: user_response(@current_user)
+        user: user_response(@current_user),
+        session_token: @current_session.token
       }, status: :ok
     else
       render json: {
@@ -97,12 +100,14 @@ class Api::V1::AuthController < ApplicationController
   end
 
   def set_session_cookie(token)
+    Rails.logger.info "Setting cookie with token: #{token[0..10]}..."
     cookies[:session_token] = {
       value: token,
       httponly: true,
       secure: Rails.env.production?,
       same_site: :lax
     }
+    Rails.logger.info "Cookie set successfully"
   end
 
   def clear_session_cookie
@@ -110,7 +115,16 @@ class Api::V1::AuthController < ApplicationController
   end
 
   def require_session
+    # Check both cookie and Authorization header for microservices compatibility
     token = cookies[:session_token]
+    
+    # If no cookie, check Authorization header
+    if token.blank?
+      auth_header = request.headers['Authorization']
+      if auth_header&.start_with?('Bearer ')
+        token = auth_header.split(' ').last
+      end
+    end
 
     unless token
       render json: {

@@ -1,0 +1,25 @@
+# PostgreSQL configuration for Task Service
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: taskmate
+  password: password
+  host: 127.0.0.1
+  port: 5432
+
+development:
+  <<: *default
+  database: task_service_db
+
+test:
+  <<: *default
+  database: task_service_test_db
+
+production:
+  <<: *default
+  database: task_service_production_db
+  username: <%= ENV['DATABASE_USERNAME'] %>
+  password: <%= ENV['DATABASE_PASSWORD'] %>
+  host: <%= ENV['DATABASE_HOST'] %>
+  port: <%= ENV['DATABASE_PORT'] %>

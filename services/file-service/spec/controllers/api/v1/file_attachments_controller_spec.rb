@@ -16,7 +16,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
       file_category_id: document_category.id
     }
   end
-  
+
   let(:invalid_attributes) do
     {
       original_filename: '',
@@ -39,10 +39,10 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     it 'filters by category' do
       image_category = FileCategory.find_by(name: 'images')
       create(:file_attachment, :image, file_category: image_category)
-      
+
       get :index, params: { category_id: image_category.id }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']['items']
       expect(data.size).to eq(1)
       expect(data.first['file_category_id']).to eq(image_category.id)
@@ -51,10 +51,10 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     it 'filters by content type' do
       image_category = FileCategory.find_by(name: 'images')
       create(:file_attachment, :image, file_category: image_category)
-      
+
       get :index, params: { content_type: 'image' }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']['items']
       expect(data.size).to eq(1)
       expect(data.first['content_type']).to include('image')
@@ -62,10 +62,10 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
 
     it 'filters by attachable type and id' do
       create(:file_attachment, attachable_type: 'User', attachable_id: 99)
-      
+
       get :index, params: { attachable_type: 'User', attachable_id: 99 }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']['items']
       expect(data.size).to eq(1)
       expect(data.first['attachable_type']).to eq('User')
@@ -79,7 +79,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     it 'returns a success response' do
       get :show, params: { id: file_attachment.id }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']
       expect(data['id']).to eq(file_attachment.id)
       expect(data['original_filename']).to eq(file_attachment.original_filename)
@@ -102,7 +102,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
       it 'returns a success response' do
         post :create, params: { file_attachment: valid_attributes }
         expect(response).to have_http_status(:created)
-        
+
         data = JSON.parse(response.body)['data']
         expect(data['original_filename']).to eq('test.pdf')
         expect(data['storage_filename']).to be_present
@@ -113,7 +113,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
       it 'returns a unprocessable entity response' do
         post :create, params: { file_attachment: invalid_attributes }
         expect(response).to have_http_status(:unprocessable_entity)
-        
+
         errors = JSON.parse(response.body)['errors']
         expect(errors).to be_present
       end
@@ -122,10 +122,10 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     context 'with file size exceeding category limit' do
       it 'returns validation error' do
         large_file_attributes = valid_attributes.merge(file_size: 15.megabytes)
-        
+
         post :create, params: { file_attachment: large_file_attributes }
         expect(response).to have_http_status(:unprocessable_entity)
-        
+
         errors = JSON.parse(response.body)['errors']
         expect(errors['file_size']).to include('이 카테고리의 최대 파일 크기는 10MB입니다')
       end
@@ -133,16 +133,16 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
 
     context 'with disallowed content type for category' do
       let(:image_category) { FileCategory.find_by(name: 'images') }
-      
+
       it 'returns validation error' do
         invalid_type_attributes = valid_attributes.merge(
           content_type: 'application/pdf',
           file_category_id: image_category.id
         )
-        
+
         post :create, params: { file_attachment: invalid_type_attributes }
         expect(response).to have_http_status(:unprocessable_entity)
-        
+
         errors = JSON.parse(response.body)['errors']
         expect(errors['content_type']).to include('이 카테고리에서 허용되지 않는 파일 형식입니다')
       end
@@ -162,7 +162,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     it 'returns a success response' do
       patch :update, params: { id: file_attachment.id, file_attachment: new_attributes }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']
       expect(data['upload_status']).to eq('completed')
     end
@@ -205,7 +205,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     it 'returns success response' do
       post :upload_complete, params: { id: file_attachment.id }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']
       expect(data['upload_status']).to eq('completed')
     end
@@ -223,7 +223,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
     it 'returns success response' do
       post :upload_failed, params: { id: file_attachment.id }
       expect(response).to be_successful
-      
+
       data = JSON.parse(response.body)['data']
       expect(data['upload_status']).to eq('failed')
     end

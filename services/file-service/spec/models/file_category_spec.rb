@@ -27,7 +27,7 @@ RSpec.describe FileCategory, type: :model do
   end
 
   describe 'allowed file types' do
-    let(:category) { create(:file_category, allowed_file_types: ['image/jpeg', 'image/png']) }
+    let(:category) { create(:file_category, allowed_file_types: [ 'image/jpeg', 'image/png' ]) }
 
     it 'can check if a content type is allowed' do
       expect(category.allows_content_type?('image/jpeg')).to be true

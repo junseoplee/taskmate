@@ -11,7 +11,7 @@ Rails.application.routes.draw do
           post :validate_file
         end
       end
-      
+
       resources :file_attachments do
         member do
           post :upload_complete
@@ -22,5 +22,5 @@ Rails.application.routes.draw do
   end
 
   # Root route for API info
-  root to: proc { [200, {}, ['File Service API v1.0']] }
+  root to: proc { [ 200, {}, [ 'File Service API v1.0' ] ] }
 end

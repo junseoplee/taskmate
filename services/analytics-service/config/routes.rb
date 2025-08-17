@@ -6,13 +6,13 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Analytics API routes
-  resources :analytics_events, only: [:index, :show, :create] do
+  resources :analytics_events, only: [ :index, :show, :create ] do
     collection do
       get :metrics
     end
   end
 
-  resources :analytics_summaries, only: [:index, :show, :create] do
+  resources :analytics_summaries, only: [ :index, :show, :create ] do
     collection do
       get :dashboard
       get :chart_data
@@ -20,5 +20,5 @@ Rails.application.routes.draw do
   end
 
   # Root route for API info
-  root to: proc { [200, {}, ['{"service":"Analytics Service","version":"1.0.0","status":"running"}']] }
+  root to: proc { [ 200, {}, [ '{"service":"Analytics Service","version":"1.0.0","status":"running"}' ] ] }
 end

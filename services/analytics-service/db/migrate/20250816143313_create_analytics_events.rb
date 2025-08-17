@@ -15,8 +15,8 @@ class CreateAnalyticsEvents < ActiveRecord::Migration[8.0]
       t.index :source_service
       t.index :occurred_at
       t.index :user_id
-      t.index [:event_type, :occurred_at]
-      t.index [:source_service, :occurred_at]
+      t.index [ :event_type, :occurred_at ]
+      t.index [ :source_service, :occurred_at ]
     end
   end
 end

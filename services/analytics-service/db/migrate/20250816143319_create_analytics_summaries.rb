@@ -17,8 +17,8 @@ class CreateAnalyticsSummaries < ActiveRecord::Migration[8.0]
       t.index :time_period
       t.index :calculated_at
       t.index :user_id
-      t.index [:metric_name, :time_period]
-      t.index [:calculated_at, :metric_name]
+      t.index [ :metric_name, :time_period ]
+      t.index [ :calculated_at, :metric_name ]
     end
   end
 end

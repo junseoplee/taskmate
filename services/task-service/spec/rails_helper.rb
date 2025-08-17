@@ -9,12 +9,12 @@ SimpleCov.start 'rails' do
   add_filter '/spec/'
   add_filter '/config/'
   add_filter '/vendor/'
-  
+
   add_group 'Models', 'app/models'
   add_group 'Controllers', 'app/controllers'
   add_group 'Services', 'app/services'
   add_group 'Serializers', 'app/serializers'
-  
+
   minimum_coverage 80
 end
 
@@ -101,7 +101,7 @@ RSpec.configure do |config|
         }.to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
-      
+
     # Mock invalid token response
     stub_request(:get, %r{http://localhost:3000/api/v1/auth/verify})
       .to_return(

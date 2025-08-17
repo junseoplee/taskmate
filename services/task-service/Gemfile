@@ -48,25 +48,25 @@ gem 'chronic'
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[ mri windows ]
-  
+
   # RSpec for testing
   gem 'rspec-rails'
-  
+
   # Factory Bot for test data
   gem 'factory_bot_rails'
-  
+
   # Faker for generating fake data
   gem 'faker'
-  
+
   # Simplecov for test coverage
   gem 'simplecov', require: false
-  
+
   # Shoulda matchers for cleaner tests
   gem 'shoulda-matchers'
-  
+
   # Database cleaner for test isolation
   gem 'database_cleaner-active_record'
-  
+
   # WebMock for HTTP request stubbing
   gem 'webmock'
 end
@@ -74,7 +74,7 @@ end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem 'spring'
-  
+
   # Code quality and style checking
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false

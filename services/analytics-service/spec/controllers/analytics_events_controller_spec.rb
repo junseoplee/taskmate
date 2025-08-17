@@ -40,7 +40,7 @@ RSpec.describe AnalyticsEventsController, type: :controller do
 
       it 'returns the created event' do
         post :create, params: valid_params
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['event_name']).to eq('task.created')
         expect(json_response['event_type']).to eq('task')
@@ -62,7 +62,7 @@ RSpec.describe AnalyticsEventsController, type: :controller do
 
       it 'returns validation errors' do
         post :create, params: invalid_params
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
       end
@@ -76,7 +76,7 @@ RSpec.describe AnalyticsEventsController, type: :controller do
     context 'without filters' do
       it 'returns all events' do
         get :index
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.length).to eq(5)
@@ -86,7 +86,7 @@ RSpec.describe AnalyticsEventsController, type: :controller do
     context 'with event_type filter' do
       it 'returns filtered events' do
         get :index, params: { event_type: 'task' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.length).to eq(3)
@@ -97,7 +97,7 @@ RSpec.describe AnalyticsEventsController, type: :controller do
     context 'with source_service filter' do
       it 'returns filtered events' do
         get :index, params: { source_service: 'task-service' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.all? { |event| event['source_service'] == 'task-service' }).to be true
@@ -111,12 +111,12 @@ RSpec.describe AnalyticsEventsController, type: :controller do
       it 'returns events within date range' do
         start_date = Date.current.beginning_of_day
         end_date = Date.current.end_of_day
-        
+
         get :index, params: { start_date: start_date, end_date: end_date }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
-        
+
         # Should include today events but not old events
         event_ids = json_response.map { |event| event['id'] }
         expect(event_ids).to include(*today_events.map(&:id))
@@ -131,10 +131,10 @@ RSpec.describe AnalyticsEventsController, type: :controller do
 
     it 'returns aggregated metrics' do
       get :metrics
-      
+
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response).to have_key('total_events')
       expect(json_response).to have_key('events_by_type')
       expect(json_response).to have_key('events_by_service')
@@ -146,7 +146,7 @@ RSpec.describe AnalyticsEventsController, type: :controller do
     context 'with time period filter' do
       it 'returns metrics for specified period' do
         get :metrics, params: { period: 'today' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('period')

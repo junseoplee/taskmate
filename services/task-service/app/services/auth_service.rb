@@ -1,6 +1,6 @@
 class AuthService
   include HTTParty
-  
+
   base_uri ENV.fetch('USER_SERVICE_URL', 'http://localhost:3000')
   default_timeout 5
 
@@ -21,7 +21,7 @@ class AuthService
 
       Rails.logger.info "AuthService response status: #{response.code}"
       Rails.logger.info "AuthService response body: #{response.body}"
-      
+
       if response.success?
         parsed = response.parsed_response
         if parsed['success']
@@ -30,8 +30,8 @@ class AuthService
           { success: false, error: parsed['error'] || 'Invalid session' }
         end
       else
-        error_message = response.parsed_response.is_a?(Hash) ? 
-                       (response.parsed_response['error'] || 'Invalid session') : 
+        error_message = response.parsed_response.is_a?(Hash) ?
+                       (response.parsed_response['error'] || 'Invalid session') :
                        'Invalid session'
         { success: false, error: error_message }
       end

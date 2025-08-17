@@ -10,7 +10,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
     context 'without filters' do
       it 'returns all summaries' do
         get :index
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.length).to eq(5)
@@ -20,7 +20,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
     context 'with metric_name filter' do
       it 'returns filtered summaries' do
         get :index, params: { metric_name: 'tasks_completed' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.all? { |summary| summary['metric_name'] == 'tasks_completed' }).to be true
@@ -30,7 +30,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
     context 'with time_period filter' do
       it 'returns filtered summaries' do
         get :index, params: { time_period: 'daily' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.length).to eq(3)
@@ -77,7 +77,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
 
       it 'returns the created summary' do
         post :create, params: valid_params
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['metric_name']).to eq('tasks_completed')
         expect(json_response['metric_type']).to eq('count')
@@ -99,7 +99,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
 
       it 'returns validation errors' do
         post :create, params: invalid_params
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
       end
@@ -112,10 +112,10 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
 
     it 'returns dashboard data' do
       get :dashboard
-      
+
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response).to have_key('chart_data')
       expect(json_response).to have_key('summary_metrics')
       expect(json_response).to have_key('total_summaries')
@@ -125,7 +125,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
     context 'with period filter' do
       it 'returns dashboard data for specified period' do
         get :dashboard, params: { period: 'daily' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('period')
@@ -139,13 +139,13 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
 
     it 'returns chart-compatible data' do
       get :chart_data
-      
+
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response).to be_an(Array)
       expect(json_response.length).to eq(5)
-      
+
       first_item = json_response.first
       expect(first_item).to have_key('name')
       expect(first_item).to have_key('value')
@@ -156,7 +156,7 @@ RSpec.describe AnalyticsSummariesController, type: :controller do
     context 'with metric filter' do
       it 'returns filtered chart data' do
         get :chart_data, params: { metric_name: 'tasks_completed' }
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response.all? { |item| item['name'] == 'tasks_completed' }).to be true

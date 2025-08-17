@@ -1,5 +1,5 @@
 class Api::V1::FileCategoriesController < ApplicationController
-  before_action :set_file_category, only: [:show, :update, :destroy, :file_types, :validate_file]
+  before_action :set_file_category, only: [ :show, :update, :destroy, :file_types, :validate_file ]
 
   def index
     categories = FileCategory.all.order(:name)
@@ -13,7 +13,7 @@ class Api::V1::FileCategoriesController < ApplicationController
 
   def create
     @file_category = FileCategory.new(file_category_params)
-    
+
     if @file_category.save
       render_success(category_json(@file_category), status: :created)
     else
@@ -47,25 +47,25 @@ class Api::V1::FileCategoriesController < ApplicationController
     file_params = params.require(:file).permit(:content_type, :file_size)
     content_type = file_params[:content_type]
     file_size = file_params[:file_size].to_i
-    
+
     errors = []
-    
+
     # 컨텐츠 타입 검증
     unless @file_category.allows_content_type?(content_type)
       errors << "파일 형식 '#{content_type}'은 이 카테고리에서 허용되지 않습니다"
     end
-    
+
     # 파일 크기 검증
     unless @file_category.allows_file_size?(file_size)
       max_size_mb = (@file_category.max_file_size / 1.megabyte).round(1)
       errors << "파일 크기가 최대 허용 크기 #{max_size_mb}MB를 초과합니다"
     end
-    
+
     data = {
       valid: errors.empty?,
       errors: errors
     }
-    
+
     render_success(data)
   end
 
@@ -88,14 +88,14 @@ class Api::V1::FileCategoriesController < ApplicationController
         allowed_types = allowed_types.split(',').map(&:strip)
       end
     end
-    
+
     permitted_params = params.require(:file_category).permit(
       :name,
       :description,
       :max_file_size,
       allowed_file_types: []
     )
-    
+
     permitted_params[:allowed_file_types] = allowed_types if allowed_types.present?
     permitted_params
   end

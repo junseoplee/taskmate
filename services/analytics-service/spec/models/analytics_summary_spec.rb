@@ -10,9 +10,9 @@ RSpec.describe AnalyticsSummary, type: :model do
     it { should validate_presence_of(:metric_type) }
     it { should validate_presence_of(:time_period) }
     it { should validate_numericality_of(:metric_value).is_greater_than_or_equal_to(0) }
-    
-    it { should validate_inclusion_of(:metric_type).in_array(['count', 'average', 'sum', 'percentage']) }
-    it { should validate_inclusion_of(:time_period).in_array(['hourly', 'daily', 'weekly', 'monthly']) }
+
+    it { should validate_inclusion_of(:metric_type).in_array([ 'count', 'average', 'sum', 'percentage' ]) }
+    it { should validate_inclusion_of(:time_period).in_array([ 'hourly', 'daily', 'weekly', 'monthly' ]) }
   end
 
   describe 'associations' do
@@ -28,7 +28,7 @@ RSpec.describe AnalyticsSummary, type: :model do
 
   describe 'scopes' do
     before { AnalyticsSummary.delete_all }
-    
+
     let!(:task_summaries) { create_list(:analytics_summary, 3, metric_name: 'tasks_completed', time_period: 'hourly') }
     let!(:user_summaries) { create_list(:analytics_summary, 2, metric_name: 'users_active', time_period: 'hourly') }
     let!(:daily_summaries) { create_list(:analytics_summary, 2, time_period: 'daily', metric_name: 'unique_daily_metric') }
@@ -52,7 +52,7 @@ RSpec.describe AnalyticsSummary, type: :model do
       it 'returns summaries from last 30 days by default' do
         old_summary = create(:analytics_summary, calculated_at: 31.days.ago)
         recent_summaries = AnalyticsSummary.recent
-        
+
         expect(recent_summaries).not_to include(old_summary)
         expect(recent_summaries.count).to eq(8) # task + user + daily + weekly summaries
       end
@@ -89,9 +89,9 @@ RSpec.describe AnalyticsSummary, type: :model do
         time_period: 'daily',
         calculated_at: Date.current.beginning_of_day
       )
-      
+
       chart_data = summary.to_chart_data
-      
+
       expect(chart_data).to include(
         name: 'tasks_completed',
         value: 25.0,

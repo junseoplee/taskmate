@@ -11,8 +11,8 @@ class CreateFileAttachments < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
-    add_index :file_attachments, [:attachable_type, :attachable_id]
+
+    add_index :file_attachments, [ :attachable_type, :attachable_id ]
     add_index :file_attachments, :storage_filename, unique: true
     add_index :file_attachments, :upload_status
     add_index :file_attachments, :content_type

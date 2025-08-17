@@ -117,7 +117,7 @@ class Api::V1::AuthController < ApplicationController
   def require_session
     # Check both cookie and Authorization header for microservices compatibility
     token = cookies[:session_token]
-    
+
     # If no cookie, check Authorization header
     if token.blank?
       auth_header = request.headers['Authorization']

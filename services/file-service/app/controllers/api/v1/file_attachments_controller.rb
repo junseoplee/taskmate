@@ -1,29 +1,29 @@
 class Api::V1::FileAttachmentsController < ApplicationController
-  before_action :set_file_attachment, only: [:show, :update, :destroy, :upload_complete, :upload_failed]
+  before_action :set_file_attachment, only: [ :show, :update, :destroy, :upload_complete, :upload_failed ]
 
   def index
     attachments = FileAttachment.all
-    
+
     # 필터링
     attachments = attachments.by_category(params[:category_id]) if params[:category_id].present?
     attachments = attachments.by_content_type(params[:content_type]) if params[:content_type].present?
-    
+
     if params[:attachable_type].present? && params[:attachable_id].present?
       attachments = attachments.where(
         attachable_type: params[:attachable_type],
         attachable_id: params[:attachable_id]
       )
     end
-    
+
     # 페이지네이션 (기본 20개)
     page = params[:page]&.to_i || 1
-    per_page = [params[:per_page]&.to_i || 20, 100].min
-    
+    per_page = [ params[:per_page]&.to_i || 20, 100 ].min
+
     total_count = attachments.count
     attachments = attachments.limit(per_page).offset((page - 1) * per_page)
-    
+
     data = attachments.map { |attachment| attachment_json(attachment) }
-    
+
     render_success({
       items: data,
       pagination: {
@@ -41,7 +41,7 @@ class Api::V1::FileAttachmentsController < ApplicationController
 
   def create
     @file_attachment = FileAttachment.new(file_attachment_params)
-    
+
     if @file_attachment.save
       render_success(attachment_json(@file_attachment), status: :created)
     else

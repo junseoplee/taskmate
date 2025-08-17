@@ -6,7 +6,7 @@ RSpec.describe Task, type: :model do
     it { should validate_presence_of(:user_id) }
     it { should validate_length_of(:title).is_at_least(1).is_at_most(255) }
     it { should validate_length_of(:description).is_at_most(2000) }
-    
+
     it { should validate_inclusion_of(:status).in_array(%w[pending in_progress completed cancelled]) }
     it { should validate_inclusion_of(:priority).in_array(%w[low medium high urgent]) }
   end

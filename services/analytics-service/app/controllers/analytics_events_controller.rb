@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
 class AnalyticsEventsController < ApplicationController
-  before_action :set_analytics_event, only: [:show]
+  before_action :set_analytics_event, only: [ :show ]
 
   # GET /analytics_events
   def index
     @analytics_events = AnalyticsEvent.all
-    
+
     # Apply filters
     @analytics_events = @analytics_events.by_type(params[:event_type]) if params[:event_type].present?
     @analytics_events = @analytics_events.by_service(params[:source_service]) if params[:source_service].present?
-    
+
     if params[:start_date].present? && params[:end_date].present?
       @analytics_events = @analytics_events.by_date_range(params[:start_date], params[:end_date])
     end
-    
+
     render json: @analytics_events
   end
 
@@ -37,17 +37,17 @@ class AnalyticsEventsController < ApplicationController
   # GET /analytics_events/metrics
   def metrics
     total_events = AnalyticsEvent.count
-    
+
     # Group by event type
     events_by_type = AnalyticsEvent.group(:event_type).count
-    
+
     # Group by source service
     events_by_service = AnalyticsEvent.group(:source_service).count
-    
+
     # Apply period filter if specified
     scope = AnalyticsEvent.all
     period = params[:period]
-    
+
     case period
     when 'today'
       scope = AnalyticsEvent.today
@@ -56,21 +56,21 @@ class AnalyticsEventsController < ApplicationController
     when 'this_month'
       scope = AnalyticsEvent.this_month
     end
-    
+
     if period.present?
       total_events = scope.count
       events_by_type = scope.group(:event_type).count
       events_by_service = scope.group(:source_service).count
     end
-    
+
     metrics = {
       total_events: total_events,
       events_by_type: events_by_type,
       events_by_service: events_by_service
     }
-    
+
     metrics[:period] = period if period.present?
-    
+
     render json: metrics
   end
 

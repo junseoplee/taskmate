@@ -8,7 +8,7 @@ class CreateFileCategories < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
+
     add_index :file_categories, :name, unique: true
   end
 end

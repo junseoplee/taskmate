@@ -5,7 +5,7 @@ class Task < ApplicationRecord
   validates :user_id, presence: true
   validates :status, inclusion: { in: %w[pending in_progress completed cancelled] }
   validates :priority, inclusion: { in: %w[low medium high urgent] }
-  
+
   # Custom validation for status transitions
   validate :valid_status_transition, if: :status_changed?
 

@@ -630,9 +630,50 @@ Content-Type: application/json
 
 ## 📊 Analytics Service API
 
-### 통계 데이터
+**구현 상태**: 기본 구조 완료, 통계 API 구현 예정
 
-#### GET /analytics/dashboard
+### 서비스 상태 확인
+
+#### GET /health
+서비스 상태 확인
+
+**요청**:
+```http
+GET /api/v1/health
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "service": "analytics-service",
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "version": "1.0.0",
+  "dependencies": {
+    "database": {
+      "status": "healthy",
+      "response_time": 12
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time": 3
+    },
+    "user_service": {
+      "status": "healthy",
+      "response_time": 35
+    }
+  }
+}
+```
+
+### 통계 데이터 (구현 예정)
+
+아래 API들은 Phase 4에서 구현 예정입니다:
+
+#### GET /analytics/dashboard (예정)
 대시보드 통계 데이터
 
 **요청**:
@@ -645,48 +686,7 @@ Authorization: Bearer abc123def456
 - `period` (optional): 1d, 7d, 30d, 90d (기본값: 30d)
 - `user_id` (optional): 특정 사용자 통계 (관리자만)
 
-**응답**:
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "status": "success",
-  "dashboard": {
-    "summary": {
-      "total_tasks": 156,
-      "completed_tasks": 98,
-      "pending_tasks": 32,
-      "in_progress_tasks": 18,
-      "cancelled_tasks": 8,
-      "completion_rate": 62.8,
-      "overdue_tasks": 5
-    },
-    "charts": {
-      "completion_trend": [
-        { "date": "2024-01-01", "completed": 3, "created": 5 },
-        { "date": "2024-01-02", "completed": 2, "created": 4 }
-      ],
-      "priority_distribution": [
-        { "priority": "low", "count": 45 },
-        { "priority": "medium", "count": 67 },
-        { "priority": "high", "count": 32 },
-        { "priority": "urgent", "count": 12 }
-      ],
-      "status_distribution": [
-        { "status": "pending", "count": 32 },
-        { "status": "in_progress", "count": 18 },
-        { "status": "completed", "count": 98 },
-        { "status": "cancelled", "count": 8 }
-      ]
-    },
-    "period": "30d",
-    "generated_at": "2024-01-01T12:00:00Z"
-  }
-}
-```
-
-#### GET /analytics/tasks/completion-rate
+#### GET /analytics/tasks/completion-rate (예정)
 완료율 통계
 
 **요청**:
@@ -695,40 +695,7 @@ GET /api/v1/analytics/tasks/completion-rate?period=7d&group_by=day
 Authorization: Bearer abc123def456
 ```
 
-**쿼리 파라미터**:
-- `period`: 1d, 7d, 30d, 90d
-- `group_by`: hour, day, week, month
-
-**응답**:
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "status": "success",
-  "completion_rate": {
-    "overall": 65.4,
-    "period": "7d",
-    "group_by": "day",
-    "data": [
-      {
-        "date": "2024-01-01",
-        "total_tasks": 8,
-        "completed_tasks": 5,
-        "completion_rate": 62.5
-      },
-      {
-        "date": "2024-01-02", 
-        "total_tasks": 12,
-        "completed_tasks": 9,
-        "completion_rate": 75.0
-      }
-    ]
-  }
-}
-```
-
-#### POST /analytics/events
+#### POST /analytics/events (예정)
 이벤트 수신 (내부 API)
 
 **요청**:
@@ -741,24 +708,8 @@ Content-Type: application/json
     "type": "task_created",
     "user_id": 1,
     "task_id": 15,
-    "timestamp": "2024-01-01T12:00:00Z",
-    "metadata": {
-      "priority": "high",
-      "has_due_date": true
-    }
+    "timestamp": "2024-01-01T12:00:00Z"
   }
-}
-```
-
-**응답**:
-```http
-HTTP/1.1 202 Accepted
-Content-Type: application/json
-
-{
-  "status": "success",
-  "message": "Event received and queued for processing",
-  "event_id": "evt_abc123"
 }
 ```
 
@@ -766,18 +717,66 @@ Content-Type: application/json
 
 ## 📎 File Service API
 
-### 파일 관리
+**구현 상태**: 기본 구조 완료, 파일 관리 API 구현 완료
 
-#### POST /files/upload
-파일 업로드
+### 파일 카테고리 관리
+
+#### GET /file_categories
+파일 카테고리 목록 조회
 
 **요청**:
 ```http
-POST /api/v1/files/upload
+GET /api/v1/file_categories
 Authorization: Bearer abc123def456
-Content-Type: multipart/form-data
+```
 
-file: [binary data]
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "file_categories": [
+    {
+      "id": 1,
+      "name": "문서",
+      "description": "일반 문서 파일",
+      "max_file_size": 10485760,
+      "allowed_extensions": [".pdf", ".doc", ".docx"],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "이미지",
+      "description": "이미지 파일",
+      "max_file_size": 5242880,
+      "allowed_extensions": [".jpg", ".jpeg", ".png", ".gif"],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### POST /file_categories
+새 파일 카테고리 생성
+
+**요청**:
+```http
+POST /api/v1/file_categories
+Authorization: Bearer abc123def456
+Content-Type: application/json
+
+{
+  "file_category": {
+    "name": "비디오",
+    "description": "동영상 파일",
+    "max_file_size": 52428800,
+    "allowed_extensions": [".mp4", ".avi", ".mov"]
+  }
+}
 ```
 
 **응답**:
@@ -787,28 +786,110 @@ Content-Type: application/json
 
 {
   "status": "success",
-  "file": {
-    "id": "file_abc123",
-    "filename": "document.pdf",
-    "original_filename": "important_document.pdf",
+  "file_category": {
+    "id": 3,
+    "name": "비디오",
+    "description": "동영상 파일",
+    "max_file_size": 52428800,
+    "allowed_extensions": [".mp4", ".avi", ".mov"],
+    "created_at": "2024-01-01T12:00:00Z",
+    "updated_at": "2024-01-01T12:00:00Z"
+  },
+  "message": "File category created successfully"
+}
+```
+
+### 파일 첨부 관리
+
+#### GET /file_attachments
+파일 첨부 목록 조회
+
+**요청**:
+```http
+GET /api/v1/file_attachments?page=1&per_page=20
+Authorization: Bearer abc123def456
+```
+
+**쿼리 파라미터**:
+- `page` (optional): 페이지 번호 (기본값: 1)
+- `per_page` (optional): 페이지당 항목 수 (기본값: 20)
+- `category_id` (optional): 카테고리 필터
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "file_attachments": [
+    {
+      "id": 1,
+      "filename": "document.pdf",
+      "file_size": 2048576,
+      "content_type": "application/pdf",
+      "file_category_id": 1,
+      "user_id": 1,
+      "task_id": null,
+      "file_path": "/uploads/documents/document.pdf",
+      "checksum": "abc123def456",
+      "created_at": "2024-01-01T12:00:00Z",
+      "updated_at": "2024-01-01T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1,
+    "total_count": 1,
+    "per_page": 20
+  }
+}
+```
+
+#### POST /file_attachments
+파일 업로드
+
+**요청**:
+```http
+POST /api/v1/file_attachments
+Authorization: Bearer abc123def456
+Content-Type: multipart/form-data
+
+file: [binary data]
+file_category_id: 1
+task_id: 15
+```
+
+**응답**:
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "status": "success",
+  "file_attachment": {
+    "id": 2,
+    "filename": "important_document.pdf",
+    "file_size": 1024768,
     "content_type": "application/pdf",
-    "size": 2048576,
-    "checksum": "sha256:abc123def456...",
-    "uploaded_by": 1,
-    "uploaded_at": "2024-01-01T12:00:00Z",
-    "download_url": "/api/v1/files/file_abc123",
-    "expires_at": "2024-01-08T12:00:00Z"
+    "file_category_id": 1,
+    "user_id": 1,
+    "task_id": 15,
+    "file_path": "/uploads/documents/important_document.pdf",
+    "checksum": "def456abc789",
+    "created_at": "2024-01-01T13:00:00Z",
+    "updated_at": "2024-01-01T13:00:00Z"
   },
   "message": "File uploaded successfully"
 }
 ```
 
-#### GET /files/:id
+#### GET /file_attachments/:id
 파일 다운로드
 
 **요청**:
 ```http
-GET /api/v1/files/file_abc123
+GET /api/v1/file_attachments/1
 Authorization: Bearer abc123def456
 ```
 
@@ -822,12 +903,12 @@ Content-Length: 2048576
 [binary data]
 ```
 
-#### DELETE /files/:id
+#### DELETE /file_attachments/:id
 파일 삭제
 
 **요청**:
 ```http
-DELETE /api/v1/files/file_abc123
+DELETE /api/v1/file_attachments/1
 Authorization: Bearer abc123def456
 ```
 
@@ -836,13 +917,14 @@ Authorization: Bearer abc123def456
 HTTP/1.1 204 No Content
 ```
 
-#### GET /files/tasks/:task_id
-태스크별 첨부파일 목록
+### 서비스 상태 확인
+
+#### GET /health
+서비스 상태 확인
 
 **요청**:
 ```http
-GET /api/v1/files/tasks/15
-Authorization: Bearer abc123def456
+GET /api/v1/health
 ```
 
 **응답**:
@@ -851,51 +933,28 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "status": "success",
-  "files": [
-    {
-      "id": "file_abc123",
-      "filename": "document.pdf",
-      "content_type": "application/pdf",
-      "size": 2048576,
-      "uploaded_at": "2024-01-01T12:00:00Z",
-      "download_url": "/api/v1/files/file_abc123"
+  "service": "file-service",
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "version": "1.0.0",
+  "dependencies": {
+    "database": {
+      "status": "healthy",
+      "response_time": 15
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time": 4
+    },
+    "user_service": {
+      "status": "healthy",
+      "response_time": 42
+    },
+    "storage": {
+      "status": "healthy",
+      "available_space": "95%"
     }
-  ],
-  "task_id": 15,
-  "total_count": 1,
-  "total_size": 2048576
-}
-```
-
-#### POST /files/tasks/:task_id/attach
-태스크에 파일 첨부
-
-**요청**:
-```http
-POST /api/v1/files/tasks/15/attach
-Authorization: Bearer abc123def456
-Content-Type: application/json
-
-{
-  "file_id": "file_abc123"
-}
-```
-
-**응답**:
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "status": "success",
-  "attachment": {
-    "task_id": 15,
-    "file_id": "file_abc123",
-    "attached_at": "2024-01-01T12:30:00Z",
-    "attached_by": 1
-  },
-  "message": "File attached to task successfully"
+  }
 }
 ```
 
@@ -1018,7 +1077,7 @@ Content-Type: application/json
 
 ### Analytics Service
 
-#### Event
+#### Event (구현 예정)
 ```json
 {
   "id": "integer",
@@ -1034,30 +1093,33 @@ Content-Type: application/json
 
 ### File Service
 
-#### File
-```json
-{
-  "id": "string (uuid)",
-  "filename": "string",
-  "original_filename": "string",
-  "content_type": "string",
-  "size": "integer",
-  "checksum": "string",
-  "storage_path": "string",
-  "uploaded_by": "integer",
-  "uploaded_at": "datetime",
-  "expires_at": "datetime"
-}
-```
-
-#### Attachment
+#### FileCategory
 ```json
 {
   "id": "integer",
-  "task_id": "integer",
-  "file_id": "string",
-  "attached_by": "integer",
-  "attached_at": "datetime"
+  "name": "string (unique)",
+  "description": "text",
+  "max_file_size": "integer (bytes)",
+  "allowed_extensions": "array of strings",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+#### FileAttachment
+```json
+{
+  "id": "integer",
+  "filename": "string",
+  "file_size": "integer (bytes)",
+  "content_type": "string",
+  "file_category_id": "integer (foreign key)",
+  "user_id": "integer",
+  "task_id": "integer (nullable)",
+  "file_path": "string",
+  "checksum": "string (SHA256)",
+  "created_at": "datetime",
+  "updated_at": "datetime"
 }
 ```
 
@@ -1211,10 +1273,10 @@ ab -n 1000 -c 10 -H "Authorization: Bearer {token}" \
 
 ### v1.0.0 (2024-01-01)
 - 초기 API 버전
-- User Service: 기본 인증 기능
-- Task Service: CRUD 기능
-- Analytics Service: 기본 통계
-- File Service: 파일 업로드/다운로드
+- User Service: 기본 인증 기능 완료
+- Task Service: CRUD 기능 완료
+- Analytics Service: 기본 구조 완료 (통계 API 구현 예정)
+- File Service: 파일 관리 API 기본 기능 완룼
 
 ### 향후 계획
 

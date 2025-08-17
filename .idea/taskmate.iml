@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/features" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/spec" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/services/task-service/tmp/cache" />
     </content>
     <orderEntry type="jdk" jdkName="rbenv: 3.4.3" jdkType="RUBY_SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

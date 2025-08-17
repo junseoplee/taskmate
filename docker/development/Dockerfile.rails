@@ -31,12 +31,17 @@ RUN bundle install
 # Copy application code
 COPY . .
 
+# Create entrypoint script and set permissions as root
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Change ownership to app user
 RUN chown -R app:app /app
 USER app
 
-# Expose port
+# Expose port (will be overridden by docker-compose)
 EXPOSE 3000
 
-# Default command
+# Use entrypoint for better initialization
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["rails", "server", "-b", "0.0.0.0"]

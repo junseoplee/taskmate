@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: taskmate-dev
+  labels:
+    name: taskmate-dev
+    environment: development
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskmate-config
+  namespace: taskmate-dev
+data:
+  RAILS_ENV: "development"
+  DATABASE_HOST: "postgres-service"
+  DATABASE_USER: "taskmate"
+  DATABASE_PASSWORD: "password"
+  REDIS_URL: "redis://redis-service:6379"
+  USER_SERVICE_URL: "http://user-service:3000"

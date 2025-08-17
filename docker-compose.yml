@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database with multiple databases support
   postgres:
@@ -41,30 +39,31 @@ services:
   user-service:
     build:
       context: ./services/user-service
-      dockerfile: ../../docker/development/Dockerfile.rails
+      dockerfile: Dockerfile.dev
     container_name: taskmate_user_service
     ports:
       - "3000:3000"
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=postgresql://taskmate:password@postgres:5432/user_service_db
+      - DATABASE_HOST=postgres
+      - DATABASE_USER=taskmate
       - REDIS_URL=redis://redis:6379/0
+      - RAILS_MASTER_KEY_DUMMY=1
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./services/user-service:/app
-      - user_service_bundle:/usr/local/bundle
-    profiles:
-      - services
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+    networks:
+      - default
 
   # Task Service  
   task-service:
     build:
       context: ./services/task-service
-      dockerfile: ../../docker/development/Dockerfile.rails
+      dockerfile: Dockerfile
     container_name: taskmate_task_service
     ports:
       - "3001:3001"
@@ -73,22 +72,23 @@ services:
       - DATABASE_URL=postgresql://taskmate:password@postgres:5432/task_service_db
       - REDIS_URL=redis://redis:6379/1
       - USER_SERVICE_URL=http://user-service:3000
+      - RAILS_MASTER_KEY_DUMMY=1
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./services/task-service:/app
-      - task_service_bundle:/usr/local/bundle
-    profiles:
-      - services
+      user-service:
+        condition: service_started
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3001"]
+    networks:
+      - default
 
   # Analytics Service
   analytics-service:
     build:
       context: ./services/analytics-service
-      dockerfile: ../../docker/development/Dockerfile.rails
+      dockerfile: Dockerfile
     container_name: taskmate_analytics_service
     ports:
       - "3002:3002"
@@ -97,22 +97,26 @@ services:
       - DATABASE_URL=postgresql://taskmate:password@postgres:5432/analytics_service_db
       - REDIS_URL=redis://redis:6379/2
       - USER_SERVICE_URL=http://user-service:3000
+      - TASK_SERVICE_URL=http://task-service:3001
+      - RAILS_MASTER_KEY_DUMMY=1
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./services/analytics-service:/app
-      - analytics_service_bundle:/usr/local/bundle
-    profiles:
-      - services
+      user-service:
+        condition: service_started
+      task-service:
+        condition: service_started
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3002"]
+    networks:
+      - default
 
   # File Service
   file-service:
     build:
       context: ./services/file-service
-      dockerfile: ../../docker/development/Dockerfile.rails
+      dockerfile: Dockerfile
     container_name: taskmate_file_service
     ports:
       - "3003:3003"
@@ -121,25 +125,26 @@ services:
       - DATABASE_URL=postgresql://taskmate:password@postgres:5432/file_service_db
       - REDIS_URL=redis://redis:6379/3
       - USER_SERVICE_URL=http://user-service:3000
+      - TASK_SERVICE_URL=http://task-service:3001
+      - RAILS_MASTER_KEY_DUMMY=1
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      user-service:
+        condition: service_started
+      task-service:
+        condition: service_started
     volumes:
-      - ./services/file-service:/app
-      - file_service_bundle:/usr/local/bundle
       - file_uploads:/app/storage
-    profiles:
-      - services
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3003"]
+    networks:
+      - default
 
 volumes:
   postgres_data:
   redis_data:
-  user_service_bundle:
-  task_service_bundle:
-  analytics_service_bundle:
-  file_service_bundle:
   file_uploads:
 
 networks:

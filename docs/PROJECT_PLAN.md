@@ -434,37 +434,96 @@ Frontend Service를 통한 API Gateway 패턴 구현으로 마이크로서비스
 - 직관적인 사용자 경험
 - 페이지 로딩 시간 < 2초
 
-### Phase 5: Kubernetes 배포 및 운영
-**예상 소요시간**: 4-6일  
+### Phase 5: NGINX & Kubernetes 로컬 통합 - 부분완료 (60%)
+**예상 소요시간**: 3-4일  
 **우선순위**: MEDIUM  
-**의존성**: Phase 4 완료
+**의존성**: Phase 4 완료  
+**현재 상태**: Kubernetes 기본 설정 60% 완료
 
-프로덕션 레벨 컨테이너 오케스트레이션 및 배포 자동화 구현
+로컬 개발/테스트 환경에서 실제 운영 환경 시뮬레이션 및 완전한 MSA 아키텍처 구현
+
+#### 5.1 NGINX 통합 설정 - 📋 **미완료** (Frontend 완료 후)
+**목적**: 실제 웹서비스와 동일한 단일 도메인 접근 환경 구축
 
 **주요 태스크:**
-- [ ] **Docker 컨테이너화** (1-2일)
-  - [ ] 각 서비스별 멀티스테이지 Dockerfile 최적화
-  - [ ] Docker Compose 프로덕션 설정
-  - [ ] 이미지 크기 최적화 (Alpine Linux 기반)
-  - [ ] 보안 스캐닝 및 취약점 점검
+- [ ] **로컬 도메인 설정** (0.5일)
+  - [ ] `/etc/hosts` 파일 설정 (`taskmate.local`)
+  - [ ] 로컬 SSL 인증서 생성 (개발용)
+  - [ ] NGINX 설정 디렉토리 구조 생성
 
-- [ ] **Kubernetes 클러스터 구성** (2-3일)
-  - [ ] minikube 로컬 클러스터 설정
-  - [ ] Namespace 및 리소스 할당 정책
-  - [ ] Deployment, Service, ConfigMap 매니페스트
-  - [ ] PersistentVolume (PostgreSQL, Redis 데이터)
-  - [ ] HorizontalPodAutoscaler 설정
+- [ ] **NGINX API Gateway 구현** (1일)
+  - [ ] `nginx/nginx.conf` 메인 설정 파일
+  - [ ] `nginx/conf.d/taskmate.conf` 사이트별 라우팅
+  - [ ] Frontend 정적 파일 서빙 최적화
+  - [ ] API 백엔드 프록시 설정 (`/api/v1/*` → 각 서비스)
 
-- [ ] **네트워킹 및 보안** (1-2일)
-  - [ ] NGINX Ingress Controller 설정
-  - [ ] TLS/SSL 인증서 관리
-  - [ ] 서비스 간 네트워크 정책
-  - [ ] Secret 관리 (DB 패스워드, API 키)
+- [ ] **Docker Compose 통합** (0.5일)
+  - [ ] `docker-compose.yml`에 NGINX 서비스 추가
+  - [ ] 포트 80/443으로 단일 접점 구성
+  - [ ] 서비스 간 네트워크 및 의존성 관리
+
+**접근 방식 변경:**
+```bash
+# 기존 (개발용)
+http://localhost:3100          # Frontend
+http://localhost:3000/api/v1/  # User API
+
+# NGINX 적용 후 (실제 서비스 환경)
+http://taskmate.local          # Frontend
+http://taskmate.local/api/v1/  # 모든 API 통합 접근
+```
+
+#### 5.2 Kubernetes 로컬 클러스터 완성 - ⚠️ **60% 완료**
+**목적**: minikube 환경에서 운영 환경 시뮬레이션 및 컨테이너 오케스트레이션 학습
+
+**✅ 이미 완료된 부분:**
+- ✅ `k8s/development/namespace.yaml` - 네임스페이스 + ConfigMap
+- ✅ `k8s/development/database/` - PostgreSQL, Redis 배포 설정
+- ✅ `k8s/development/services/user-service.yaml` - User Service 배포 + NodePort
+- ✅ `k8s/development/services/task-service.yaml` - Task Service 배포 + NodePort
+- ✅ `scripts/minikube-setup.sh` - 자동 배포 스크립트 (부분)
+
+**📋 남은 태스크:**
+- [ ] **누락된 서비스 매니페스트 작성** (1일)
+  - [ ] `k8s/development/services/analytics-service.yaml`
+  - [ ] `k8s/development/services/file-service.yaml`
+  - [ ] `k8s/development/services/frontend-service.yaml` (Frontend 완료 후)
+
+- [ ] **NGINX Ingress 설정** (1일)
+  - [ ] `k8s/development/ingress/nginx-ingress.yaml`
+  - [ ] Ingress Controller 설치 및 설정
+  - [ ] 로컬 도메인 라우팅 설정 (`taskmate.local`)
+
+- [ ] **로컬 이미지 빌드 및 배포** (0.5일)
+  - [ ] minikube Docker 환경에서 이미지 빌드
+  - [ ] `scripts/minikube-setup.sh` 완성 (5개 서비스 모두)
+  - [ ] 배포 검증 및 헬스체크 확인
+
+**로컬 테스트 방법:**
+```bash
+# Kubernetes 환경 배포 및 테스트
+minikube start
+./scripts/minikube-setup.sh
+kubectl get pods -n taskmate-dev
+kubectl port-forward -n taskmate-dev svc/frontend-service 3100:3100
+```
+
+#### 5.3 통합 테스트 및 검증 (0.5일)
+- [ ] **3가지 환경 비교 테스트**
+  - [ ] Docker Compose (개발) - `localhost:3100`
+  - [ ] NGINX 통합 (실제 환경) - `taskmate.local`
+  - [ ] Kubernetes (운영 시뮬레이션) - 포트포워딩 접근
+
+- [ ] **기능 검증 시나리오**
+  - [ ] 단일 도메인에서 전체 기능 동작 확인
+  - [ ] API 라우팅 및 세션 관리 검증
+  - [ ] 파일 업로드/다운로드 동작 확인
 
 **성공 기준**:
-- 4개 마이크로서비스 독립 배포
-- 자동 스케일링 동작
-- 무중단 롤링 업데이트
+- ✅ 로컬에서 실제 웹서비스와 동일한 사용자 경험 제공
+- ✅ `taskmate.local`을 통한 완전한 기능 접근
+- ✅ Kubernetes 환경에서 5개 서비스 정상 동작
+- ✅ 포트폴리오/데모용 완성도 높은 아키텍처 구현
 
 ### Phase 6: 모니터링 및 관찰성 구현
 **예상 소요시간**: 3-5일  
@@ -607,8 +666,8 @@ Frontend Service를 통한 API Gateway 패턴 구현으로 마이크로서비스
 **Phase 2**: ✅ 완료 3일 (핵심 서비스) - 예상 8-10일 → 실제 3일  
 **Phase 2.5**: ✅ 완료 1일 (Docker & K8s) - 추가 구현  
 **Phase 3**: ✅ 완료 1일 (확장 서비스) - 예상 6-8일 → 실제 1일  
-**Phase 4**: 5-7일 (Frontend) ← **다음 단계**  
-**Phase 5**: ~~4-6일 (Kubernetes)~~ → Phase 2.5에서 완료  
+**Phase 4**: 🔄 **70% 완료** (Frontend) ← **현재 진행**  
+**Phase 5**: ⚠️ **60% 완료** (NGINX & K8s 로컬 통합) - K8s 기본 설정 완료  
 **Phase 6**: 3-5일 (모니터링)  
 **Phase 7**: 4-6일 (테스트/최적화)  
 **Phase 8**: 3-4일 (문서화)  
@@ -622,20 +681,32 @@ Frontend Service를 통한 API Gateway 패턴 구현으로 마이크로서비스
 3. **✅ Phase 2.5 완료**: Docker & Kubernetes 환경 구축 (1일)
 
 ### 🏗️ Week 2: 확장 서비스 구현 - ✅ 완료
-3. **✅ Phase 3 완료**: Analytics + File Service 구현 (1일) - 예상 6-8일 → 실제 1일
+1. **✅ Phase 3 완료**: Analytics + File Service 구현 (1일) - 예상 6-8일 → 실제 1일
    - ✅ Analytics Service 구현 (0.5일) - 기본 구조 및 API 구현
    - ✅ File Service 구현 (0.5일) - TDD 완료, 파일 관리 API
 
-### 🎨 Week 3-4: Frontend UI 개발
-4. **Phase 4**: Frontend UI/UX 개발 (5-7일) ← **다음 단계**
+### 🎨 Week 3: Frontend UI 개발 - 🔄 **70% 완료**
+2. **🔄 Phase 4**: Frontend UI/UX 개발 (5-7일) ← **현재 진행**
+   - ✅ Frontend Service 컨트롤러 및 Service Client 구현
+   - ✅ 테스트 계정 및 더미 데이터 생성 (17개 태스크, 5개 파일)
+   - ✅ 모든 백엔드 API 검증 완료
+   - 📋 **남은 작업**: Rails Views + Tailwind CSS UI 구현 (30%)
 
-### 📈 Week 5-7: 운영 환경 구축
-5. **Phase 5**: Kubernetes 배포 환경 (4-6일)
-6. **Phase 6**: 모니터링 및 관찰성 (3-5일)
-7. **Phase 7**: 성능 테스트 및 최적화 (4-6일)
+### 📈 Week 4-5: 로컬 통합 환경 구축 - ⚠️ **60% 완료**  
+3. **⚠️ Phase 5**: NGINX & Kubernetes 로컬 통합 (3-4일)
+   - ✅ Kubernetes 기본 매니페스트 (User, Task, Database 서비스)
+   - ✅ minikube 설정 스크립트 (부분)
+   - 📋 **남은 작업**: 
+     - Analytics, File Service K8s 매니페스트
+     - NGINX API Gateway 설정 (Frontend 완료 후)
+     - Ingress 설정 및 로컬 도메인 통합
+
+### 📊 Week 6-7: 모니터링 및 최적화
+4. **Phase 6**: 모니터링 및 관찰성 (3-5일)
+5. **Phase 7**: 성능 테스트 및 최적화 (4-6일)
 
 ### 🎯 Week 8: 프로젝트 완성
-8. **Phase 8**: 문서화 및 시연 준비 (3-4일)
+6. **Phase 8**: 문서화 및 시연 준비 (3-4일)
 
 ### 우선순위 분류
 

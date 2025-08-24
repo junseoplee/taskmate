@@ -61,6 +61,39 @@ Authorization: Bearer {session_token}
 
 ## 🔐 User Service API
 
+### 서비스 상태 확인
+
+#### GET /health
+서비스 상태 확인
+
+**요청**:
+```http
+GET /api/v1/health
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "version": "1.0.0",
+  "dependencies": {
+    "database": {
+      "status": "healthy",
+      "response_time": 12
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time": 3
+    }
+  }
+}
+```
+
 ### 인증 관리
 
 #### POST /auth/register
@@ -630,7 +663,7 @@ Content-Type: application/json
 
 ## 📊 Analytics Service API
 
-**구현 상태**: 기본 구조 완료, 통계 API 구현 예정
+**구현 상태**: 구현 완료
 
 ### 서비스 상태 확인
 
@@ -669,33 +702,121 @@ Content-Type: application/json
 }
 ```
 
-### 통계 데이터 (구현 예정)
+### 통계 데이터
 
-아래 API들은 Phase 4에서 구현 예정입니다:
-
-#### GET /analytics/dashboard (예정)
+#### GET /analytics/dashboard
 대시보드 통계 데이터
 
 **요청**:
 ```http
-GET /api/v1/analytics/dashboard?period=30d
-Authorization: Bearer abc123def456
+GET /api/v1/analytics/dashboard
 ```
 
-**쿼리 파라미터**:
-- `period` (optional): 1d, 7d, 30d, 90d (기본값: 30d)
-- `user_id` (optional): 특정 사용자 통계 (관리자만)
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
 
-#### GET /analytics/tasks/completion-rate (예정)
+{
+  "status": "success",
+  "data": {
+    "total_tasks": 150,
+    "completed_tasks": 85,
+    "completion_rate": 56.67,
+    "pending_tasks": 45,
+    "in_progress_tasks": 20,
+    "high_priority_tasks": 25,
+    "overdue_tasks": 8,
+    "period": "all_time",
+    "generated_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+#### GET /analytics/tasks/completion-rate
 완료율 통계
 
 **요청**:
 ```http
-GET /api/v1/analytics/tasks/completion-rate?period=7d&group_by=day
-Authorization: Bearer abc123def456
+GET /api/v1/analytics/tasks/completion-rate
 ```
 
-#### POST /analytics/events (예정)
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "data": {
+    "completion_rate": 56.67,
+    "total_tasks": 150,
+    "completed_tasks": 85,
+    "period": "all_time"
+  }
+}
+```
+
+#### GET /analytics/completion-trend
+완료 추세 데이터
+
+**요청**:
+```http
+GET /api/v1/analytics/completion-trend
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "data": {
+    "trend_data": [
+      {
+        "date": "2024-01-01",
+        "completed_tasks": 3
+      },
+      {
+        "date": "2024-01-02", 
+        "completed_tasks": 5
+      }
+    ],
+    "period": "30_days",
+    "generated_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+#### GET /analytics/priority-distribution
+우선순위별 태스크 분포
+
+**요청**:
+```http
+GET /api/v1/analytics/priority-distribution
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "data": {
+    "distribution": {
+      "high": 25,
+      "medium": 75,
+      "low": 50
+    },
+    "total_tasks": 150,
+    "generated_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+#### POST /analytics/events
 이벤트 수신 (내부 API)
 
 **요청**:
@@ -705,11 +826,25 @@ Content-Type: application/json
 
 {
   "event": {
-    "type": "task_created",
+    "event_type": "task_created",
     "user_id": 1,
     "task_id": 15,
-    "timestamp": "2024-01-01T12:00:00Z"
+    "data": {}
   }
+}
+```
+
+**응답**:
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "status": "success",
+  "data": {
+    "event_id": 123
+  },
+  "message": "이벤트가 성공적으로 기록되었습니다."
 }
 ```
 
@@ -1273,10 +1408,10 @@ ab -n 1000 -c 10 -H "Authorization: Bearer {token}" \
 
 ### v1.0.0 (2024-01-01)
 - 초기 API 버전
-- User Service: 기본 인증 기능 완료
-- Task Service: CRUD 기능 완료
-- Analytics Service: 기본 구조 완료 (통계 API 구현 예정)
-- File Service: 파일 관리 API 기본 기능 완룼
+- User Service: 인증 및 사용자 관리 기능 완료
+- Task Service: CRUD 기능 완료  
+- Analytics Service: 통계 API 구현 완료
+- File Service: 파일 관리 API 기본 기능 완료
 
 ### 향후 계획
 

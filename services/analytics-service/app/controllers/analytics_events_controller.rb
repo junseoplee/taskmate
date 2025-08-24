@@ -49,11 +49,11 @@ class AnalyticsEventsController < ApplicationController
     period = params[:period]
 
     case period
-    when 'today'
+    when "today"
       scope = AnalyticsEvent.today
-    when 'this_week'
+    when "this_week"
       scope = AnalyticsEvent.this_week
-    when 'this_month'
+    when "this_month"
       scope = AnalyticsEvent.this_month
     end
 

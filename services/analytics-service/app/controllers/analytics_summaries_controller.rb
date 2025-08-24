@@ -37,17 +37,17 @@ class AnalyticsSummariesController < ApplicationController
     period = params[:period]
 
     case period
-    when 'daily'
-      scope = AnalyticsSummary.by_period('daily')
-    when 'weekly'
-      scope = AnalyticsSummary.by_period('weekly')
-    when 'monthly'
-      scope = AnalyticsSummary.by_period('monthly')
-    when 'today'
+    when "daily"
+      scope = AnalyticsSummary.by_period("daily")
+    when "weekly"
+      scope = AnalyticsSummary.by_period("weekly")
+    when "monthly"
+      scope = AnalyticsSummary.by_period("monthly")
+    when "today"
       scope = AnalyticsSummary.today
-    when 'this_week'
+    when "this_week"
       scope = AnalyticsSummary.this_week
-    when 'this_month'
+    when "this_month"
       scope = AnalyticsSummary.this_month
     end
 
@@ -56,10 +56,10 @@ class AnalyticsSummariesController < ApplicationController
 
     # Generate summary metrics
     summary_metrics = {
-      total_count: scope.where(metric_type: 'count').sum(:metric_value),
-      average_value: scope.where(metric_type: 'average').average(:metric_value)&.round(2) || 0,
-      total_sum: scope.where(metric_type: 'sum').sum(:metric_value),
-      percentage_metrics: scope.where(metric_type: 'percentage').count
+      total_count: scope.where(metric_type: "count").sum(:metric_value),
+      average_value: scope.where(metric_type: "average").average(:metric_value)&.round(2) || 0,
+      total_sum: scope.where(metric_type: "sum").sum(:metric_value),
+      percentage_metrics: scope.where(metric_type: "percentage").count
     }
 
     dashboard_data = {

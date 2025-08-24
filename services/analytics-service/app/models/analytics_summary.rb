@@ -26,12 +26,12 @@ class AnalyticsSummary < ApplicationRecord
   # Instance methods
   def formatted_value
     case metric_type
-    when 'percentage'
+    when "percentage"
       "#{metric_value}%"
-    when 'count', 'sum'
+    when "count", "sum"
       metric_value.to_i.to_s
-    when 'average'
-      format('%.2f', metric_value)
+    when "average"
+      format("%.2f", metric_value)
     else
       metric_value.to_s
     end
@@ -48,19 +48,19 @@ class AnalyticsSummary < ApplicationRecord
   end
 
   def percentage?
-    metric_type == 'percentage'
+    metric_type == "percentage"
   end
 
   def count?
-    metric_type == 'count'
+    metric_type == "count"
   end
 
   def average?
-    metric_type == 'average'
+    metric_type == "average"
   end
 
   def sum?
-    metric_type == 'sum'
+    metric_type == "sum"
   end
 
   private

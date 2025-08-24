@@ -23,7 +23,7 @@ cd taskmate
 
 # 프로젝트 구조 확인
 ls -la
-# services/   - 4개 마이크로서비스
+# services/   - 5개 마이크로서비스 (User, Task, Analytics, File, Frontend)
 # k8s/        - Kubernetes 매니페스트
 # docs/       - 프로젝트 문서
 # scripts/    - 개발 스크립트
@@ -31,7 +31,7 @@ ls -la
 
 ### 2단계: Docker Compose 환경 시작
 ```bash
-# 모든 서비스 시작 (PostgreSQL, Redis, 4개 마이크로서비스)
+# 모든 서비스 시작 (PostgreSQL, Redis, 5개 마이크로서비스)
 docker-compose up -d
 
 # 서비스 상태 확인
@@ -47,10 +47,13 @@ curl http://localhost:3000/up
 curl http://localhost:3001/up
 
 # Analytics Service (포트 3002)
-curl http://localhost:3002/api/v1/health
+curl http://localhost:3002/up
 
 # File Service (포트 3003)
-curl http://localhost:3003/api/v1/file_categories
+curl http://localhost:3003/up
+
+# Frontend Service (포트 3100)
+curl http://localhost:3100/up
 ```
 
 ## 🔧 Development Workflow
@@ -118,25 +121,32 @@ docker-compose down --rmi all
 
 ## 🌐 Service URLs
 
-### 마이크로서비스
+### 백엔드 마이크로서비스
 - **User Service**: http://localhost:3000
   - 인증 API: `/api/v1/auth/*`
   - 헬스체크: `/up`
 - **Task Service**: http://localhost:3001
   - 태스크 API: `/api/v1/tasks/*`
   - 헬스체크: `/up`
-- **Analytics Service**: http://localhost:3002
-  - 통계 API: `/api/v1/analytics/*` (구현 예정)
-  - 헬스체크: `/api/v1/health`
+- **Analytics Service**: http://localhost:3002 ⚠️
+  - 통계 API: `/api/v1/analytics/*` ❌ **구현 필요**
+  - 헬스체크: `/up`
 - **File Service**: http://localhost:3003
   - 파일 API: `/api/v1/file_*`
-  - 헬스체크: `/api/v1/health`
+  - 헬스체크: `/up`
+
+### 프론트엔드 서비스
+- **Frontend Service**: http://localhost:3100 🔄
+  - Web UI: 메인 웹 애플리케이션
+  - API Gateway: 백엔드 서비스 프록시
+  - 헬스체크: `/up`
 
 ### 인프라
 - **PostgreSQL**: localhost:5432
   - 사용자: `taskmate`
   - 패스워드: `password`
   - 데이터베이스: `user_service_db`, `task_service_db`, `analytics_service_db`, `file_service_db`
+  - Frontend Service는 데이터베이스 없음 (API Gateway 패턴)
 - **Redis**: localhost:6379
   - 세션 관리 및 캐싱용
 
@@ -191,6 +201,9 @@ docker-compose exec analytics-service ./bin/rails db:migrate
 
 # File Service 마이그레이션
 docker-compose exec file-service ./bin/rails db:migrate
+
+# Frontend Service (마이그레이션 없음 - API Gateway)
+# docker-compose exec frontend-service ./bin/rails db:migrate  # 불필요
 ```
 
 ## 🔍 Troubleshooting
@@ -236,6 +249,9 @@ docker-compose logs
 # 특정 서비스 로그 확인
 docker-compose logs user-service
 docker-compose logs task-service
+docker-compose logs analytics-service
+docker-compose logs file-service
+docker-compose logs frontend-service
 
 # 컨테이너 상태 확인
 docker-compose ps
@@ -270,6 +286,9 @@ docker-compose logs -f
 # 특정 서비스 로그 실시간 모니터링
 docker-compose logs -f user-service
 docker-compose logs -f task-service
+docker-compose logs -f analytics-service
+docker-compose logs -f file-service
+docker-compose logs -f frontend-service
 docker-compose logs -f postgres
 docker-compose logs -f redis
 
@@ -342,6 +361,11 @@ curl -X POST http://localhost:3001/api/v1/tasks \
 
 # 파일 카테고리 조회
 curl -b cookies.txt http://localhost:3003/api/v1/file_categories
+
+# Frontend 서비스 접속 테스트 (브라우저에서 확인)
+open http://localhost:3100
+# 또는
+curl http://localhost:3100
 ```
 
 ### 개발 워크플로우
@@ -351,7 +375,25 @@ curl -b cookies.txt http://localhost:3003/api/v1/file_categories
 3. **통합 테스트**: 전체 서비스 간 API 호출 테스트
 4. **커밋**: TDD 사이클 완료 후 커밋
 
-### Kubernetes 환경 (선택사항)
+### 현재 구현 상태 및 주의사항
+
+#### ✅ 완전 구현된 서비스
+- **User Service**: 인증/세션 API 완전 구현 (53개 테스트)
+- **Task Service**: 태스크 CRUD API 완전 구현 (39개 테스트)
+- **File Service**: 파일 관리 API 완전 구현 (TDD 완료)
+
+#### ⚠️ 부분 구현된 서비스
+- **Analytics Service**: 기본 구조만 완료
+  - ❌ 통계 API 미구현 (`/api/v1/analytics/dashboard`, `/api/v1/analytics/tasks/completion-rate`, `/api/v1/analytics/priority-distribution`)
+  - ✅ 헬스체크 API만 구현됨
+
+#### 🔄 진행중인 서비스
+- **Frontend Service**: 40% 구현 완료
+  - ✅ 컨트롤러 및 Service Client 구현
+  - ❌ 뷰 템플릿 및 UI 구현 필요
+  - ⚠️ 한글 인코딩 문제 수정 필요
+
+### Kubernetes 환경
 
 ```bash
 # minikube 시작

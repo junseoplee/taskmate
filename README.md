@@ -5,7 +5,7 @@
 ## 📋 프로젝트 소개
 
 TaskMate는 Ruby on Rails 8을 기반으로 구축된 마이크로서비스 아키텍처(MSA) 할일 관리 애플리케이션입니다. 
-4개의 독립적인 서비스로 구성되어 있으며, Kubernetes 환경에서 운영됩니다.
+5개의 독립적인 서비스로 구성되어 있으며, Kubernetes 환경에서 운영됩니다.
 
 ## 🏗️ 시스템 아키텍처
 
@@ -17,6 +17,10 @@ graph TB
     
     subgraph "Load Balancer"
         LB[NGINX Ingress<br/>Kubernetes]
+    end
+    
+    subgraph "Frontend Layer"
+        FE[Frontend Service<br/>:3100<br/>Web UI + API Gateway]
     end
     
     subgraph "Microservices Layer"
@@ -37,10 +41,11 @@ graph TB
     end
     
     UI --> LB
-    LB --> US
-    LB --> TS
-    LB --> AS
-    LB --> FS
+    LB --> FE
+    FE --> US
+    FE --> TS
+    FE --> AS
+    FE --> FS
     
     TS -.->|인증 검증| US
     AS -.->|인증 검증| US
@@ -63,8 +68,9 @@ graph TB
 |--------|------|---------------|-----------|------|
 | **User Service** | 3000 | user_service_db | 인증, 세션 관리, 프로필 | ✅ **완료** |
 | **Task Service** | 3001 | task_service_db | 할일 CRUD, 상태 관리 | ✅ **완료** |
-| **Analytics Service** | 3002 | analytics_service_db | 통계, 대시보드 | ✅ **완료** |
+| **Analytics Service** | 3002 | analytics_service_db | 통계, 대시보드 | ⚠️ **부분완료** |
 | **File Service** | 3003 | file_service_db | 파일 첨부, 관리 | ✅ **완료** |
+| **Frontend Service** | 3100 | - | Web UI, API Gateway | 🔄 **진행중** |
 
 ## 🛠️ 기술 스택
 
@@ -107,13 +113,18 @@ taskmate/                           # 🏠 메인 프로젝트 (Monorepo)
 │   │   ├── app/models/            # Task 모델
 │   │   ├── app/controllers/       # TasksController API
 │   │   └── spec/                  # RSpec 테스트
-│   ├── 🟢 analytics-service/      # Analytics Service (✅ 완료)
+│   ├── 🟡 analytics-service/      # Analytics Service (⚠️ 부분완료)
 │   │   ├── app/models/            # Analytics 모델
-│   │   └── app/controllers/       # Analytics API
-│   └── 🟢 file-service/           # File Service (✅ 완료)
-│       ├── app/models/            # FileCategory, FileAttachment
-│       ├── app/controllers/       # File Management API
-│       └── spec/                  # RSpec 테스트 (포괄적)
+│   │   └── app/controllers/       # Analytics API (통계 API 구현 필요)
+│   ├── 🟢 file-service/           # File Service (✅ 완료)
+│   │   ├── app/models/            # FileCategory, FileAttachment
+│   │   ├── app/controllers/       # File Management API
+│   │   └── spec/                  # RSpec 테스트 (포괄적)
+│   └── 🔄 frontend-service/       # Frontend Service (🔄 진행중)
+│       ├── app/controllers/       # UI Controllers + Service Clients
+│       ├── app/services/          # Backend API 연동
+│       ├── app/views/             # Rails Views (구현 예정)
+│       └── config/routes.rb       # Frontend 라우팅
 ├── 📁 k8s/                        # Kubernetes 매니페스트
 │   ├── deployments/               # 서비스 배포 설정
 │   ├── services/                  # 서비스 디스커버리
@@ -181,6 +192,7 @@ curl http://localhost:3000/api/v1/auth/register  # User Service
 curl http://localhost:3001/api/v1/tasks          # Task Service  
 curl http://localhost:3002/api/v1/health         # Analytics Service
 curl http://localhost:3003/api/v1/file_categories # File Service
+curl http://localhost:3100/up                    # Frontend Service
 ```
 
 ### 🧪 테스트 실행
@@ -196,7 +208,8 @@ bundle exec rspec
 
 ## 📚 개발 진행 상황
 
-### Phase 2: 핵심 서비스 개발 ✅ **완료** (2025-08-17)
+### Phase 2-3: 핵심 서비스 개발 ✅ **완료** (2025-08-17)
+### Phase 4: Frontend 개발 🔄 **진행중** (2025-08-24)
 
 - ✅ **User Service** (2025-08-16 완료)
   - User, Session 모델 TDD 구현
@@ -208,10 +221,10 @@ bundle exec rspec
   - 사용자 인증 연동
   - Docker 컨테이너화 완료
 
-- ✅ **Analytics Service** (2025-08-17 완료)
-  - Analytics 모델 기본 구조
-  - API 엔드포인트 설계
-  - 통계 데이터 수집 기반 마련
+- ⚠️ **Analytics Service** (2025-08-17 부분완료)
+  - Analytics 모델 기본 구조 ✅
+  - 헬스체크 API ✅
+  - **통계 API 구현 필요** ❌ (dashboard, completion-rate, priority-distribution)
 
 - ✅ **File Service** (2025-08-17 완료)
   - FileCategory, FileAttachment 모델 TDD 구현
@@ -219,9 +232,16 @@ bundle exec rspec
   - RSpec 테스트 포괄적 구현
 
 - ✅ **Docker Compose 통합 환경** (2025-08-17 완료)
-  - 4개 서비스 + PostgreSQL + Redis 통합
+  - 5개 서비스 + PostgreSQL + Redis 통합
   - 서비스 간 통신 및 의존성 관리
   - 개발 환경 표준화 완료
+
+- 🔄 **Frontend Service** (2025-08-24 진행중)
+  - Rails Views + Tailwind CSS 기반 UI
+  - API Gateway 패턴으로 백엔드 서비스 통합
+  - **컨트롤러 구현 완료** ✅
+  - **Service Client 구현 완료** ✅
+  - **UI 뷰 구현 필요** 🔄
 
 ## 📖 문서
 
@@ -240,15 +260,16 @@ bundle exec rspec
 | **Infrastructure** | 100% | ✅ 완료 | Docker Compose 완료 |
 | **User Service** | 100% | ✅ 완료 | TDD + API 완료 |
 | **Task Service** | 100% | ✅ 완료 | 모델 + API 완료 |
-| **Analytics Service** | 100% | ✅ 완료 | 기본 구조 완료 |
+| **Analytics Service** | 60% | ⚠️ 부분완료 | 통계 API 구현 필요 |
 | **File Service** | 100% | ✅ 완료 | TDD + API 완료 |
-| **Docker Integration** | 100% | ✅ 완료 | 4개 서비스 통합 |
-| **Frontend** | 0% | ⏳ 대기 | Phase 3 |
-| **Kubernetes** | 0% | ⏳ 대기 | Phase 3 |
+| **Frontend Service** | 40% | 🔄 진행중 | 컨트롤러 완료, UI 구현 필요 |
+| **Docker Integration** | 100% | ✅ 완료 | 5개 서비스 통합 |
+| **Kubernetes** | 100% | ✅ 완료 | Minikube 환경 완료 |
 
-### 🎯 **Phase 2 완료**: 모든 마이크로서비스 구현 및 Docker 통합 완료!
+### 🎯 **Phase 1-3 완료**: 백엔드 마이크로서비스 및 인프라 구축 완료!
+### 🔄 **Phase 4 진행중**: Frontend Service 개발 (40% 완료)
 
-**다음 단계 (Phase 3)**: Frontend 개발 및 Kubernetes 배포
+**현재 작업**: Analytics API 구현 → Frontend UI 완성 → 전체 통합 테스트
 
 ## 🤝 기여 방법
 

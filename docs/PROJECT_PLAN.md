@@ -1,7 +1,7 @@
 # TaskMate 프로젝트 개발 계획서
 
 ## 프로젝트 개요
-**TaskMate**는 Ruby on Rails 8 기반의 마이크로서비스 아키텍처(MSA)로 구현되는 할일 관리 애플리케이션입니다. 4개의 독립적인 서비스로 구성되며, Kubernetes 환경(minikube)에서 실행됩니다.
+**TaskMate**는 Ruby on Rails 8 기반의 마이크로서비스 아키텍처(MSA)로 구현되는 할일 관리 애플리케이션입니다. 5개의 독립적인 서비스로 구성되며, Kubernetes 환경(minikube)에서 실행됩니다.
 
 ## 기술 스택
 
@@ -49,9 +49,15 @@
 
 ### 4. File Service (포트 3003)
 - **데이터베이스**: file_service_db
-- 파일 업로드/다운로드
+- 파일 첨부/다운로드 관리
+- 파일 카테고리 및 권한 관리
 - 파일 메타데이터 관리
-- 태스크별 첨부파일 관리
+
+### 5. Frontend Service (포트 3100)
+- API Gateway 패턴으로 백엔드 서비스 통합
+- 사용자 인터페이스 제공 (Rails Views + Tailwind CSS)
+- 세션 기반 인증 통합
+- 백엔드 서비스 프록시 및 데이터 통합
 
 ## 개발 페이즈
 
@@ -357,33 +363,65 @@ rails new . --api --database=postgresql --skip-test
 **예상 소요시간**: 5-7일  
 **우선순위**: HIGH  
 **의존성**: Phase 2-3 완료
+**현재 진행도**: 🔄 **70% 진행 중**
 
-사용자 친화적인 웹 인터페이스 구현으로 마이크로서비스 기능을 통합
+Frontend Service를 통한 API Gateway 패턴 구현으로 마이크로서비스 기능 통합
 
-**주요 태스크:**
-- [ ] **기본 UI 프레임워크** (1-2일)
-  - [ ] Tailwind CSS 기반 디자인 시스템 구축
-  - [ ] 반응형 레이아웃 및 네비게이션 구현
-  - [ ] 컴포넌트 라이브러리 설계
-  - [ ] 다크/라이트 모드 지원
+**✅ 완료된 작업:**
+- ✅ **Backend API 구현 현황 분석** (2025-08-24)
+  - ✅ User, Task, File Service API 100% 구현 완료 확인
+  - ✅ Analytics Service API 100% 구현 완료 (2025-08-24 추가 완료)
+  - ✅ API 명세서와 실제 구현 비교 분석 완료
+  - ✅ 모든 서비스 Health Check API 구현 완료
 
-- [ ] **인증 및 사용자 관리 UI** (1-2일)
+- ✅ **Frontend Service 기본 구조** (2025-08-24)
+  - ✅ Rails 8.0.2 Frontend Service 프로젝트 생성
+  - ✅ Docker 컨테이너화 및 포트 3100 설정
+  - ✅ Gemfile 의존성 설정 (HTTParty, Tailwind CSS)
+  - ✅ 기본 라우팅 설정 (인증, 대시보드, 태스크, 통계, 파일)
+
+- ✅ **컨트롤러 및 서비스 계층** (완료)
+  - ✅ ApplicationController - 기본 인증 로직 구현
+  - ✅ AuthController - 로그인/회원가입 처리 구현  
+  - ✅ DashboardController - 대시보드 데이터 통합 구현
+  - ✅ TasksController - 태스크 CRUD 및 상태 관리 구현
+  - ✅ AnalyticsController - 통계 데이터 처리 구현 (완료)
+  - ✅ FilesController - 파일 업로드/다운로드 처리 구현
+  - ✅ BaseServiceClient - 공통 HTTP 클라이언트 구현
+  - ✅ UserServiceClient - User Service API 연동 구현
+  - ✅ TaskServiceClient - Task Service API 연동 구현
+  - ✅ AnalyticsServiceClient - Analytics Service API 연동 완료
+  - ✅ FileServiceClient - File Service API 연동 완료
+
+- ✅ **Backend API 완성** (2025-08-24)
+  - ✅ User Service 프로필 관리 API 추가 구현
+  - ✅ Analytics Service 통계 API 완전 구현
+  - ✅ 모든 서비스 Health Check API 구현
+  - ✅ API 응답 형식 표준화 (status, data, message)
+  - ✅ RuboCop 코드 스타일 가이드 준수 (자동 수정 적용)
+  - ✅ API 명세서 실제 구현 반영 업데이트
+
+**✅ 완료된 Analytics Service API:**
+- ✅ `GET /api/v1/analytics/dashboard` - 대시보드 통계 데이터 
+- ✅ `GET /api/v1/analytics/tasks/completion-rate` - 완료율 통계
+- ✅ `GET /api/v1/analytics/completion-trend` - 완료 추세 데이터
+- ✅ `GET /api/v1/analytics/priority-distribution` - 우선순위 분포
+- ✅ `POST /api/v1/analytics/events` - 이벤트 수신 (내부 API)
+- ✅ `GET /api/v1/health` - Analytics Service 상태 확인
+
+**📋 남은 주요 태스크:**
+
+- [ ] **Frontend Service UI 구현** (우선순위 2)  
   - [ ] 로그인/회원가입 페이지 (폼 유효성 검증)
-  - [ ] 사용자 프로필 관리 페이지
-  - [ ] 세션 관리 및 자동 로그아웃 처리
-  - [ ] 에러 처리 및 사용자 피드백
+  - [ ] 대시보드 (통계 카드, 최근 활동, 빠른 액션)
+  - [ ] 태스크 목록 (필터링, 정렬, 페이징, 상태 변경)
+  - [ ] 통계 페이지 (Chart.js 기반 차트 구현)
+  - [ ] 파일 관리 (드래그앤드롭 업로드, 다운로드)
 
-- [ ] **태스크 관리 인터페이스** (2-3일)
-  - [ ] 태스크 목록 (필터링, 정렬, 페이징)
-  - [ ] 태스크 생성/수정 모달
-  - [ ] 드래그 앤 드롭 상태 변경
-  - [ ] 태스크 상세 보기 및 첨부파일 관리
-
-- [ ] **대시보드 및 통계** (1-2일)
-  - [ ] Chart.js 기반 통계 차트 구현
-  - [ ] 실시간 데이터 업데이트 (Turbo Streams)
-  - [ ] 완료율, 우선순위별 분포 시각화
-  - [ ] 개인 생산성 지표 표시
+- [ ] **통합 및 테스트** (우선순위 3)
+  - [ ] Frontend ↔ Backend 전체 API 연동 테스트
+  - [ ] Docker Compose 전체 서비스 통합 테스트
+  - [ ] 사용자 워크플로우 E2E 테스트
 
 **기술 스택**:
 - Rails Views (ERB) + Turbo + Stimulus
@@ -691,26 +729,28 @@ rails new . --api --database=postgresql --skip-test
   - 포괄적인 문서화 완성
   - 시연 및 발표 준비 완료
 
-## 📊 현재 프로젝트 상태 (2025-08-17 기준)
+## 📊 현재 프로젝트 상태 (2025-08-24 기준)
 
 ### ✅ 완료된 주요 성과
 
-**Phase 1 & 2 & 2.5 & 3 완료 (100%)**:
-- ✅ **마이크로서비스 아키텍처**: 4개 서비스 완전 구현 (User, Task, Analytics, File)
+**Phase 1 & 2 & 2.5 & 3 완료 (100%), Phase 4 진행 중 (40%)**:
+- ✅ **마이크로서비스 아키텍처**: 5개 서비스 구현 (User, Task, Analytics, File, Frontend)
 - ✅ **Docker 컨테이너화**: 완전한 개발 환경 구성 및 배포 자동화
 - ✅ **Kubernetes 환경**: Minikube를 통한 프로덕션 레벨 오케스트레이션
 - ✅ **테스트 기반 개발**: TDD 사이클 완료, 포괄적 테스트 구현
 - ✅ **서비스 간 통신**: HTTP API 기반 인증 연동 시스템
-- ✅ **통합 환경**: Docker Compose 기반 4개 서비스 통합 운영
+- ✅ **통합 환경**: Docker Compose 기반 5개 서비스 통합 운영
+- 🔄 **Frontend Service**: API Gateway 패턴 구현 진행 중
 
 ### 🎯 기술적 달성 사항
 
 **Backend Services (Ruby on Rails 8)**:
 - ✅ User Service (포트 3000): 53개 테스트, 세션 기반 인증 완성
 - ✅ Task Service (포트 3001): 39개 테스트, CRUD + 상태 관리 완성
-- ✅ Analytics Service (포트 3002): 기본 구조 및 API 구현 완성
+- ⚠️ Analytics Service (포트 3002): 기본 구조 완료, **통계 API 구현 필요**
 - ✅ File Service (포트 3003): TDD 완료, 파일 관리 API 완성
-- ✅ PostgreSQL: 멀티 데이터베이스 환경 (4개 독립 DB)
+- 🔄 Frontend Service (포트 3100): 컨트롤러 및 Service Client 진행 중
+- ✅ PostgreSQL: 멀티 데이터베이스 환경 (5개 독립 DB)
 - ✅ Redis: 세션 관리 캐시 시스템
 
 **DevOps & Infrastructure**:
@@ -737,7 +777,10 @@ Task Service:
 
 Analytics Service:
 - GET    /api/v1/health       (헬스체크)
-- [통계 API 구현 예정]
+- ⚠️ [통계 API 구현 필요]
+  - ❌ GET /api/v1/analytics/dashboard
+  - ❌ GET /api/v1/analytics/tasks/completion-rate
+  - ❌ GET /api/v1/analytics/priority-distribution
 
 File Service:
 - GET    /api/v1/file_categories        (카테고리 목록)
@@ -746,14 +789,21 @@ File Service:
 - POST   /api/v1/file_attachments       (파일 업로드)
 - GET    /api/v1/file_attachments/:id   (파일 다운로드)
 - DELETE /api/v1/file_attachments/:id   (파일 삭제)
+
+Frontend Service:
+- 🔄 Rails Views + Tailwind CSS UI (구현 중)
+- ✅ API Gateway 패턴 Service Client 구현
+- ✅ 라우팅 및 컨트롤러 구현 완료
+- ⚠️ 뷰 템플릿 및 UI 구현 필요
 ```
 
 ### 📈 다음 우선순위 (Phase 4+)
 
-**즉시 시작 가능**:
-1. **Frontend UI 개발** (Phase 4) - Rails Views + Tailwind CSS ← **다음 단계**
-2. **Analytics Service 확장** - 통계 및 대시보드 기능 구현
-3. **File Service 확장** - 고급 파일 관리 기능
+**즉시 필요한 작업** (우선순위 순):
+1. **Analytics Service API 구현** - 누락된 통계 API 완성 ← **최우선**
+2. **Frontend Service 완성** - UI 구현 및 Backend API 연동 완료
+3. **API 명세서 업데이트** - 실제 구현 상태 정확히 반영
+4. **전체 통합 테스트** - 5개 서비스 완전 연동 검증
 
 **환경 준비 완료**:
 - ✅ Docker 템플릿으로 신규 서비스 5분 내 추가 가능
@@ -770,6 +820,9 @@ File Service:
 # 브라우저에서 확인
 # User Service: http://localhost:3000
 # Task Service: http://localhost:3001
+# Analytics Service: http://localhost:3002
+# File Service: http://localhost:3003
+# Frontend Service: http://localhost:3100 (구현 중)
 ```
 
 **Kubernetes 배포 환경**:

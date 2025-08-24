@@ -83,11 +83,11 @@ class Api::V1::AuthController < ApplicationController
   private
 
   def user_params
-    params.permit(:name, :email, :password, :password_confirmation)
+    params.require(:user).permit(:name, :email, :password, :password_confirmation)
   end
 
   def login_params
-    params.permit(:email, :password)
+    params.require(:user).permit(:email, :password)
   end
 
   def user_response(user)
@@ -120,9 +120,9 @@ class Api::V1::AuthController < ApplicationController
 
     # If no cookie, check Authorization header
     if token.blank?
-      auth_header = request.headers['Authorization']
-      if auth_header&.start_with?('Bearer ')
-        token = auth_header.split(' ').last
+      auth_header = request.headers["Authorization"]
+      if auth_header&.start_with?("Bearer ")
+        token = auth_header.split(" ").last
       end
     end
 

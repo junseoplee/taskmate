@@ -14,6 +14,17 @@ Rails.application.routes.draw do
         post :logout
         get :verify
       end
+
+      # Users management
+      resources :users, only: [ :show ] do
+        collection do
+          get :profile
+          put :profile, action: :update_profile
+        end
+      end
+
+      # Health check
+      get :health, to: "health#show"
     end
   end
 end

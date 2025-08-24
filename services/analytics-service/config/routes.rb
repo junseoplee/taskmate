@@ -5,17 +5,21 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Analytics API routes
-  resources :analytics_events, only: [ :index, :show, :create ] do
-    collection do
-      get :metrics
-    end
-  end
+  namespace :api do
+    namespace :v1 do
+      # Analytics dashboard and main stats
+      get "analytics/dashboard", to: "analytics#dashboard"
 
-  resources :analytics_summaries, only: [ :index, :show, :create ] do
-    collection do
-      get :dashboard
-      get :chart_data
+      # Task-specific analytics
+      get "analytics/tasks/completion-rate", to: "analytics#completion_rate"
+      get "analytics/completion-trend", to: "analytics#completion_trend"
+      get "analytics/priority-distribution", to: "analytics#priority_distribution"
+
+      # Event collection endpoint (internal API)
+      post "analytics/events", to: "analytics#create_event"
+
+      # Health check
+      get "health", to: "health#show"
     end
   end
 

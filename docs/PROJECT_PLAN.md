@@ -895,10 +895,11 @@ Frontend Service:
 ### 📈 다음 우선순위 (Phase 4+)
 
 **즉시 필요한 작업** (우선순위 순):
-1. **Analytics Service API 구현** - 누락된 통계 API 완성 ← **최우선**
-2. **Frontend Service 완성** - UI 구현 및 Backend API 연동 완료
-3. **API 명세서 업데이트** - 실제 구현 상태 정확히 반영
-4. **전체 통합 테스트** - 5개 서비스 완전 연동 검증
+1. **Session Token 인증 이슈 수정** ← **최우선** 🚨
+   - TasksController의 create/update/destroy에 session_token 전달 추가
+   - 상세 가이드: [NEXT_SESSION_TODO.md](NEXT_SESSION_TODO.md) 참조
+2. **전체 통합 테스트** - 5개 서비스 완전 연동 검증
+3. **Phase 5 Kubernetes 통합** - NGINX Ingress 설정 완료
 
 **환경 준비 완료**:
 - ✅ Docker 템플릿으로 신규 서비스 5분 내 추가 가능

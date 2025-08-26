@@ -23,12 +23,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_16_143319) do
     t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index [ "event_type", "occurred_at" ], name: "index_analytics_events_on_event_type_and_occurred_at"
-    t.index [ "event_type" ], name: "index_analytics_events_on_event_type"
-    t.index [ "occurred_at" ], name: "index_analytics_events_on_occurred_at"
-    t.index [ "source_service", "occurred_at" ], name: "index_analytics_events_on_source_service_and_occurred_at"
-    t.index [ "source_service" ], name: "index_analytics_events_on_source_service"
-    t.index [ "user_id" ], name: "index_analytics_events_on_user_id"
+    t.index ["event_type", "occurred_at"], name: "index_analytics_events_on_event_type_and_occurred_at"
+    t.index ["event_type"], name: "index_analytics_events_on_event_type"
+    t.index ["occurred_at"], name: "index_analytics_events_on_occurred_at"
+    t.index ["source_service", "occurred_at"], name: "index_analytics_events_on_source_service_and_occurred_at"
+    t.index ["source_service"], name: "index_analytics_events_on_source_service"
+    t.index ["user_id"], name: "index_analytics_events_on_user_id"
   end
 
   create_table "analytics_summaries", force: :cascade do |t|
@@ -41,12 +41,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_16_143319) do
     t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index [ "calculated_at", "metric_name" ], name: "index_analytics_summaries_on_calculated_at_and_metric_name"
-    t.index [ "calculated_at" ], name: "index_analytics_summaries_on_calculated_at"
-    t.index [ "metric_name", "time_period" ], name: "index_analytics_summaries_on_metric_name_and_time_period"
-    t.index [ "metric_name" ], name: "index_analytics_summaries_on_metric_name"
-    t.index [ "metric_type" ], name: "index_analytics_summaries_on_metric_type"
-    t.index [ "time_period" ], name: "index_analytics_summaries_on_time_period"
-    t.index [ "user_id" ], name: "index_analytics_summaries_on_user_id"
+    t.index ["calculated_at", "metric_name"], name: "index_analytics_summaries_on_calculated_at_and_metric_name"
+    t.index ["calculated_at"], name: "index_analytics_summaries_on_calculated_at"
+    t.index ["metric_name", "time_period"], name: "index_analytics_summaries_on_metric_name_and_time_period"
+    t.index ["metric_name"], name: "index_analytics_summaries_on_metric_name"
+    t.index ["metric_type"], name: "index_analytics_summaries_on_metric_type"
+    t.index ["time_period"], name: "index_analytics_summaries_on_time_period"
+    t.index ["user_id"], name: "index_analytics_summaries_on_user_id"
   end
 end

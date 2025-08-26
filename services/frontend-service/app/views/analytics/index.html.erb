@@ -1,0 +1,305 @@
+<% content_for :title, "Analytics - TaskMate" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+    <p class="mt-2 text-gray-600">Analyze your task performance and gain valuable insights</p>
+  </div>
+
+  <!-- Time Range Filter -->
+  <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="flex items-center space-x-2">
+        <label class="text-sm font-medium text-gray-700">Time Period</label>
+        <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+        </select>
+      </div>
+      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Key Metrics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Tasks -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Tasks</p>
+          <p class="text-3xl font-bold text-gray-900 mt-2"><%= @analytics_data&.dig('total_tasks') || 127 %></p>
+          <p class="text-xs text-green-600 mt-1">+8% from last month</p>
+        </div>
+        <div class="bg-blue-100 p-3 rounded-full">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Completion Rate</p>
+          <p class="text-3xl font-bold text-green-600 mt-2"><%= @analytics_data&.dig('completion_rate') || 76 %>%</p>
+          <p class="text-xs text-green-600 mt-1">+3% from last month</p>
+        </div>
+        <div class="bg-green-100 p-3 rounded-full">
+          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Average Time -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Average Completion Time</p>
+          <p class="text-3xl font-bold text-yellow-600 mt-2">2.3<span class="text-lg">days</span></p>
+          <p class="text-xs text-red-600 mt-1">+0.5 days from last month</p>
+        </div>
+        <div class="bg-yellow-100 p-3 rounded-full">
+          <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overdue Tasks -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Overdue Tasks</p>
+          <p class="text-3xl font-bold text-red-600 mt-2"><%= @analytics_data&.dig('overdue_tasks') || 12 %></p>
+          <p class="text-xs text-red-600 mt-1">+2 from last month</p>
+        </div>
+        <div class="bg-red-100 p-3 rounded-full">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Task Completion Trend -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Task Completion Trend</h2>
+      <div class="h-80">
+        <!-- Chart placeholder with sample data visualization -->
+        <div class="h-full flex items-end justify-between space-x-2">
+          <% completion_data = [45, 52, 48, 61, 55, 67, 73, 69, 76, 82, 78, 85] %>
+          <% months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] %>
+          <% max_value = completion_data.max %>
+          <% completion_data.each_with_index do |value, index| %>
+            <div class="flex-1 flex flex-col items-center">
+              <div class="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t" 
+                   style="height: <%= (value.to_f / max_value * 100).round %>%"
+                   title="<%= months[index] %>: <%= value %>%">
+              </div>
+              <p class="text-xs text-gray-600 mt-2"><%= months[index] %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority Distribution -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Task Priority Distribution</h2>
+      <div class="h-80 flex items-center justify-center">
+        <!-- Pie chart placeholder -->
+        <div class="relative w-48 h-48">
+          <div class="w-48 h-48 rounded-full border-8" style="border-color: #ef4444 #f59e0b #10b981 #6b7280; border-style: solid;">
+            <!-- Pie chart segments would go here in a real implementation -->
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="text-center">
+              <p class="text-2xl font-bold text-gray-900">127</p>
+              <p class="text-sm text-gray-600">Total Tasks</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 grid grid-cols-2 gap-4">
+        <% priority_stats = [['High', 25, 'red'], ['Medium', 68, 'yellow'], ['Low', 34, 'green']] %>
+        <% priority_stats.each do |label, count, color| %>
+          <div class="flex items-center space-x-2">
+            <div class="w-4 h-4 bg-<%= color %>-500 rounded-full"></div>
+            <span class="text-sm text-gray-700"><%= label %>: <%= count %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Productivity Analysis -->
+  <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-6">Productivity Analysis</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Daily Activity Heatmap -->
+      <div class="md:col-span-2">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Daily Activity Heatmap</h3>
+        <div class="grid grid-cols-7 gap-2">
+          <% days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %>
+          <% days.each do |day| %>
+            <div class="text-center text-xs text-gray-600 mb-2"><%= day %></div>
+          <% end %>
+          
+          <% activity_levels = [3, 1, 4, 2, 5, 2, 1, 4, 3, 2, 5, 4, 3, 2, 2, 5, 4, 3, 1, 4, 3, 5, 2, 4, 3, 1, 2, 4] %>
+          <% activity_levels.each do |level| %>
+            <% bg_color = case level
+                 when 1 then 'bg-green-100'
+                 when 2 then 'bg-green-200' 
+                 when 3 then 'bg-green-300'
+                 when 4 then 'bg-green-400'
+                 when 5 then 'bg-green-500'
+                 else 'bg-gray-100'
+                 end %>
+            <div class="w-6 h-6 <%= bg_color %> rounded" title="Activity: <%= level %>"></div>
+          <% end %>
+        </div>
+        <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
+          <span>Less</span>
+          <div class="flex space-x-1">
+            <div class="w-3 h-3 bg-green-100 rounded"></div>
+            <div class="w-3 h-3 bg-green-200 rounded"></div>
+            <div class="w-3 h-3 bg-green-300 rounded"></div>
+            <div class="w-3 h-3 bg-green-400 rounded"></div>
+            <div class="w-3 h-3 bg-green-500 rounded"></div>
+          </div>
+          <span>More</span>
+        </div>
+      </div>
+
+      <!-- Top Performers -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Key Insights</h3>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Most Productive Day</span>
+            <span class="text-sm font-semibold text-blue-600">Thursday</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Daily Average Completed</span>
+            <span class="text-sm font-semibold text-green-600">3.2 tasks</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Current Streak</span>
+            <span class="text-sm font-semibold text-yellow-600">7 days</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-600">Weekly Goal Progress</span>
+            <span class="text-sm font-semibold text-purple-600">85%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Performance -->
+  <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold text-gray-900">Recent Performance</h2>
+      <%= link_to "View Detailed Report", "#", class: "text-blue-600 hover:text-blue-700 text-sm font-medium" %>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Week Summary -->
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">This Week</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">Completed Tasks</span>
+            <span class="text-sm font-medium text-gray-900">18</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">In Progress</span>
+            <span class="text-sm font-medium text-gray-900">7</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">New Tasks</span>
+            <span class="text-sm font-medium text-gray-900">12</span>
+          </div>
+          <div class="pt-2 border-t">
+            <div class="flex justify-between">
+              <span class="text-sm font-medium text-green-600">Completion Rate</span>
+              <span class="text-sm font-medium text-green-600">72%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Month Summary -->
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">This Month</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">Completed Tasks</span>
+            <span class="text-sm font-medium text-gray-900">89</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">Average Time</span>
+            <span class="text-sm font-medium text-gray-900">2.1 days</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">Overdue Tasks</span>
+            <span class="text-sm font-medium text-red-600">8</span>
+          </div>
+          <div class="pt-2 border-t">
+            <div class="flex justify-between">
+              <span class="text-sm font-medium text-green-600">vs Goal</span>
+              <span class="text-sm font-medium text-green-600">+12%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goals Progress -->
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Goal Achievement</h3>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm text-gray-600">Weekly Goal</span>
+              <span class="text-sm font-medium text-gray-900">85%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 85%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm text-gray-600">Monthly Goal</span>
+              <span class="text-sm font-medium text-gray-900">76%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-green-600 h-2 rounded-full" style="width: 76%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm text-gray-600">Quarterly Goal</span>
+              <span class="text-sm font-medium text-gray-900">68%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-yellow-600 h-2 rounded-full" style="width: 68%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Frontend Service" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  </head>
+
+  <body class="bg-gray-50">
+    <!-- Navigation -->
+    <% if current_user %>
+      <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between h-16">
+            <div class="flex">
+              <!-- Logo -->
+              <div class="flex-shrink-0 flex items-center">
+                <%= link_to root_path, class: "text-xl font-bold text-blue-600" do %>
+                  TaskMate
+                <% end %>
+              </div>
+              
+              <!-- Navigation Links -->
+              <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <%= link_to dashboard_path, class: "#{request.path == dashboard_path ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" do %>
+                  Dashboard
+                <% end %>
+                
+                <%= link_to tasks_path, class: "#{request.path.start_with?('/tasks') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" do %>
+                  Tasks
+                <% end %>
+                
+                <%= link_to analytics_path, class: "#{request.path == analytics_path ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" do %>
+                  Analytics
+                <% end %>
+                
+                <%= link_to files_path, class: "#{request.path == files_path ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" do %>
+                  Files
+                <% end %>
+              </div>
+            </div>
+            
+            <!-- User Menu -->
+            <div class="hidden sm:ml-6 sm:flex sm:items-center">
+              <div class="relative ml-3">
+                <div class="flex items-center space-x-4">
+                  <span class="text-sm text-gray-700">Hello, <%= current_user['name'] %></span>
+                  <%= link_to "Logout", auth_logout_path, method: :delete,
+                      class: "bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md text-sm font-medium",
+                      data: { confirm: "Are you sure you want to logout?" } %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Mobile menu button -->
+            <div class="sm:hidden flex items-center">
+              <button type="button" class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100" data-behavior="mobile-menu-toggle">
+                <span class="sr-only">Open main menu</span>
+                <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    <% end %>
+
+    <!-- Flash Messages -->
+    <% if notice %>
+      <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 mx-4 mt-4">
+        <%= notice %>
+      </div>
+    <% end %>
+    
+    <% if alert %>
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 mx-4 mt-4">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <%= yield %>
+    </main>
+  </body>
+</html>

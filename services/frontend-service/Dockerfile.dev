@@ -1,0 +1,51 @@
+# Frontend Service Dockerfile for Development
+FROM ruby:3.4.3-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    postgresql-client \
+    libpq-dev \
+    libyaml-dev \
+    curl \
+    vim \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables
+ENV RAILS_ENV=development
+ENV BUNDLE_PATH=/usr/local/bundle
+
+# Copy Gemfile and install gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Install Node.js dependencies for Tailwind CSS
+COPY package*.json ./
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Create startup script and set permissions (before switching user)
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Create non-root user
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R rails:rails /app
+
+USER rails
+
+# Expose port 3100 for Frontend Service
+EXPOSE 3100
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3100"]

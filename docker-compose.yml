@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: taskmate
       POSTGRES_PASSWORD: password
       POSTGRES_DB: postgres
-      POSTGRES_MULTIPLE_DATABASES: user_service_db,task_service_db,analytics_service_db,file_service_db
+      POSTGRES_MULTIPLE_DATABASES: user_service_db,task_service_db,analytics_service_db,file_service_db,frontend_service_db
     ports:
       - "5432:5432"
     volumes:
@@ -139,6 +139,40 @@ services:
     volumes:
       - file_uploads:/app/storage
     command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3003"]
+    networks:
+      - default
+
+  # Frontend Service
+  frontend-service:
+    build:
+      context: ./services/frontend-service
+      dockerfile: Dockerfile.dev
+    container_name: taskmate_frontend_service
+    ports:
+      - "3100:3100"
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgresql://taskmate:password@postgres:5432/frontend_service_db
+      - REDIS_URL=redis://redis:6379/4
+      - USER_SERVICE_URL=http://user-service:3000
+      - TASK_SERVICE_URL=http://task-service:3001
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3002
+      - FILE_SERVICE_URL=http://file-service:3003
+      - SECRET_KEY_BASE=dummy_key_for_development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      task-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+      file-service:
+        condition: service_started
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3100"]
     networks:
       - default
 

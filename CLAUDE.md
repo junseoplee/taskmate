@@ -469,6 +469,91 @@ curl -X POST http://localhost:3000/api/v1/auth/logout \
 - Descriptive commit messages
 - Regular commits with atomic changes
 
+### ⚠️ **CRITICAL: Monorepo Commit Rules**
+
+**MANDATORY**: All commits MUST be made from the project root directory to maintain proper Monorepo structure.
+
+#### **Correct Workflow (Frontend Development Example)**
+```bash
+# ✅ CORRECT: Work in service directory, commit from root
+1. cd services/frontend-service           # Work in service directory
+2. # Implement features, edit views, controllers...
+3. cd /Users/junseop/Documents/work/taskmate  # ✅ RETURN TO ROOT!
+4. git add services/frontend-service/     # Stage all changes
+5. git add docs/PROJECT_PLAN.md          # Update docs if needed
+6. git status                            # Verify changes
+7. git commit -m "feat(frontend): ..."   # Commit from ROOT
+```
+
+#### **❌ WRONG: Never commit from service directory**
+```bash
+# ❌ WRONG: This will create incomplete commits
+cd services/frontend-service
+git add .          # ❌ Only stages service files
+git commit -m "..."  # ❌ Partial commit, missing context
+```
+
+#### **Why Root Commits Are Critical**
+- **Monorepo Integrity**: All services managed in single repository
+- **Consistent History**: Complete change tracking across services
+- **Dependency Management**: Cross-service changes in single commit
+- **CI/CD Pipeline**: Build/deployment based on root-level changes
+- **Documentation Sync**: Keep PROJECT_PLAN.md updated with code changes
+
+#### **Service-Specific Commit Checklist**
+```bash
+✅ Pre-Commit Checklist:
+□ Feature implementation completed
+□ cd /Users/junseop/Documents/work/taskmate  # ROOT DIRECTORY
+□ git status  # Verify all intended changes
+□ git add services/[service-name]/
+□ Update docs/PROJECT_PLAN.md if needed
+□ git commit -m "proper conventional message"
+□ Verify current directory is still ROOT
+```
+
+#### **Common Monorepo Commit Scenarios**
+
+**Single Service Changes:**
+```bash
+# Work on User Service
+cd services/user-service
+# ... implement features ...
+cd /Users/junseop/Documents/work/taskmate  # ✅ Return to root
+git add services/user-service/
+git commit -m "feat(user-service): add profile API"
+```
+
+**Multi-Service Changes:**
+```bash
+# Work on multiple services
+cd services/user-service && # ... changes ...
+cd services/frontend-service && # ... changes ...
+cd /Users/junseop/Documents/work/taskmate  # ✅ Return to root
+git add services/user-service/ services/frontend-service/
+git commit -m "feat: integrate user profile across services"
+```
+
+**Documentation + Code Changes:**
+```bash
+# Implementation + documentation update
+cd services/frontend-service && # ... implement UI ...
+cd /Users/junseop/Documents/work/taskmate  # ✅ Return to root
+git add services/frontend-service/
+git add docs/PROJECT_PLAN.md
+git commit -m "feat(frontend): complete UI implementation
+
+Phase 4 Frontend 구현 완료
+- Rails Views + Tailwind CSS UI 완성
+- 모든 백엔드 API 연동 완료
+- 반응형 디자인 구현
+
+🧪 테스트 결과: 모든 기능 정상 동작
+📊 Phase 4: 100% 완료
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
 ### Git Commit Convention
 
 **MANDATORY**: Follow conventional commit format for all commits in this repository.

@@ -35,3 +35,18 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Development temporary files
+cookies.txt
+memo.txt
+services/*/cookies.txt
+
+# Coverage reports
+services/*/coverage/
+services/*/coverage/*
+
+# IDE files
+.idea/
+
+# Docker temporary files
+docker-compose.override.yml

@@ -385,6 +385,260 @@ Content-Type: application/json
 
 ## 📝 Task Service API
 
+### 🚨 구현 현황
+- **구현 완료**: 9개 API
+- **미구현 (Critical)**: 7개 API
+- **Frontend 요구**: 16개 API 
+- **완성률**: 56%
+
+### ❌ 미구현 API (즉시 구현 필요)
+
+#### PATCH /tasks/:id/complete
+태스크 완료 (전용 엔드포인트)
+
+**요청**:
+```http
+PATCH /api/v1/tasks/1/complete
+Authorization: Bearer abc123def456
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "task": {
+    "id": 1,
+    "title": "완료된 작업",
+    "status": "completed",
+    "completed_at": "2024-01-01T14:00:00Z",
+    "updated_at": "2024-01-01T14:00:00Z"
+  },
+  "message": "Task completed successfully"
+}
+```
+
+#### GET /tasks/search
+태스크 검색
+
+**요청**:
+```http
+GET /api/v1/tasks/search?q=중요한&user_id=1&page=1&per_page=20
+Authorization: Bearer abc123def456
+X-User-ID: 1
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "tasks": [
+    {
+      "id": 1,
+      "title": "중요한 작업",
+      "description": "중요한 내용이 포함된 작업",
+      "status": "pending",
+      "priority": "high",
+      "relevance_score": 0.95
+    }
+  ],
+  "query": "중요한",
+  "total_results": 15,
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1,
+    "total_count": 15
+  }
+}
+```
+
+#### GET /tasks/statistics
+태스크 통계
+
+**요청**:
+```http
+GET /api/v1/tasks/statistics?user_id=1&date_range=30d
+Authorization: Bearer abc123def456
+X-User-ID: 1
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "statistics": {
+    "total_tasks": 150,
+    "completed_tasks": 85,
+    "completion_rate": 56.67,
+    "pending_tasks": 45,
+    "in_progress_tasks": 20,
+    "priority_distribution": {
+      "high": 25,
+      "medium": 75,
+      "low": 50
+    },
+    "completion_trend": [
+      {"date": "2024-01-01", "completed": 3},
+      {"date": "2024-01-02", "completed": 5}
+    ],
+    "period": "30_days",
+    "generated_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+#### GET /tasks/overdue
+지연된 태스크
+
+**요청**:
+```http
+GET /api/v1/tasks/overdue?user_id=1&page=1&per_page=20
+Authorization: Bearer abc123def456
+X-User-ID: 1
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "tasks": [
+    {
+      "id": 5,
+      "title": "지연된 중요 작업",
+      "due_date": "2023-12-30T00:00:00Z",
+      "status": "pending",
+      "priority": "high",
+      "days_overdue": 2
+    }
+  ],
+  "total_overdue": 8,
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1,
+    "total_count": 8
+  }
+}
+```
+
+#### GET /tasks/upcoming
+다가오는 태스크
+
+**요청**:
+```http
+GET /api/v1/tasks/upcoming?user_id=1&days=7
+Authorization: Bearer abc123def456
+X-User-ID: 1
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "tasks": [
+    {
+      "id": 10,
+      "title": "다가오는 작업",
+      "due_date": "2024-01-05T00:00:00Z",
+      "status": "pending",
+      "priority": "medium",
+      "days_until_due": 4
+    }
+  ],
+  "period_days": 7,
+  "total_upcoming": 12,
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1,
+    "total_count": 12
+  }
+}
+```
+
+#### PATCH /tasks/bulk_update
+태스크 일괄 업데이트
+
+**요청**:
+```http
+PATCH /api/v1/tasks/bulk_update
+Authorization: Bearer abc123def456
+Content-Type: application/json
+
+{
+  "task_ids": [1, 2, 3, 4, 5],
+  "updates": {
+    "status": "completed",
+    "priority": "low"
+  }
+}
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "updated_tasks": [
+    {"id": 1, "status": "completed", "priority": "low"},
+    {"id": 2, "status": "completed", "priority": "low"}
+  ],
+  "updated_count": 5,
+  "failed_updates": [],
+  "message": "5 tasks updated successfully"
+}
+```
+
+#### GET /projects/:id/tasks
+프로젝트별 태스크 (미구현)
+
+**요청**:
+```http
+GET /api/v1/projects/1/tasks?user_id=1
+Authorization: Bearer abc123def456
+X-User-ID: 1
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "project": {
+    "id": 1,
+    "name": "웹사이트 개발 프로젝트"
+  },
+  "tasks": [
+    {
+      "id": 15,
+      "title": "프론트엔드 개발",
+      "project_id": 1,
+      "status": "in_progress"
+    }
+  ],
+  "total_tasks": 25,
+  "completed_tasks": 10
+}
+```
+
+### ✅ 구현 완료된 API
+
 ### 태스크 관리
 
 #### GET /tasks
@@ -934,6 +1188,58 @@ Content-Type: application/json
 }
 ```
 
+### ❌ 미구현 API (File Service)
+
+#### GET /file_attachments/statistics
+파일 통계 조회
+
+**요청**:
+```http
+GET /api/v1/file_attachments/statistics?user_id=1
+Authorization: Bearer abc123def456
+X-User-ID: 1
+```
+
+**응답**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "statistics": {
+    "total_files": 25,
+    "total_size": 104857600,
+    "total_size_mb": 100.0,
+    "categories": {
+      "documents": {
+        "count": 15,
+        "size": 52428800,
+        "size_mb": 50.0
+      },
+      "images": {
+        "count": 8, 
+        "size": 41943040,
+        "size_mb": 40.0
+      },
+      "others": {
+        "count": 2,
+        "size": 10485760,
+        "size_mb": 10.0
+      }
+    },
+    "upload_status_distribution": {
+      "completed": 23,
+      "pending": 1,
+      "failed": 1
+    },
+    "generated_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+### ✅ 구현 완료된 API
+
 ### 파일 첨부 관리
 
 #### GET /file_attachments
@@ -1401,30 +1707,5 @@ ab -n 1000 -c 10 -H "Content-Type: application/json" \
 ab -n 1000 -c 10 -H "Authorization: Bearer {token}" \
    http://localhost:3001/api/v1/tasks
 ```
-
----
-
-## 📋 API 변경 이력
-
-### v1.0.0 (2024-01-01)
-- 초기 API 버전
-- User Service: 인증 및 사용자 관리 기능 완료
-- Task Service: CRUD 기능 완료  
-- Analytics Service: 통계 API 구현 완료
-- File Service: 파일 관리 API 기본 기능 완료
-
-### 향후 계획
-
-#### v1.1.0 (예정)
-- [ ] API Rate Limiting 추가
-- [ ] WebSocket 실시간 알림
-- [ ] 파일 업로드 진행률 API
-- [ ] 태스크 댓글 기능
-
-#### v1.2.0 (예정)
-- [ ] GraphQL API 지원
-- [ ] API 키 기반 인증
-- [ ] 대시보드 실시간 업데이트
-- [ ] 파일 미리보기 API
 
 이 API 명세서는 TaskMate 마이크로서비스의 모든 엔드포인트와 사용법을 포함하고 있으며, 개발 과정에서 지속적으로 업데이트됩니다.

@@ -1,4 +1,5 @@
 class Api::V1::AnalyticsController < ApplicationController
+  before_action :authenticate_user!
   # GET /api/v1/analytics/dashboard
   def dashboard
     stats = calculate_dashboard_stats
@@ -97,67 +98,155 @@ class Api::V1::AnalyticsController < ApplicationController
   private
 
   def calculate_dashboard_stats
-    # Task Service에서 데이터를 가져오는 대신 로컬 Analytics DB에서 집계
-    # 실제 프로덕션에서는 Task Service API를 호출하거나 동기화된 데이터 사용
+    user_id = current_user["id"]
+    session_token = extract_session_token
+    task_client = TaskServiceClient.new
 
-    # 예시 데이터 - 실제로는 Analytics DB에서 집계된 데이터 사용
-    total_tasks = 150
-    completed_tasks = 85
-    pending_tasks = 45
-    in_progress_tasks = 20
-    high_priority_tasks = 25
-    overdue_tasks = 8
+    # Get all user tasks
+    all_tasks_response = task_client.get_user_tasks(user_id, session_token: session_token)
 
-    completion_rate = total_tasks > 0 ? (completed_tasks.to_f / total_tasks * 100).round(2) : 0
+    if all_tasks_response && all_tasks_response["tasks"]
+      tasks = all_tasks_response["tasks"] || []
 
-    {
-      total_tasks: total_tasks,
-      completed_tasks: completed_tasks,
-      completion_rate: completion_rate,
-      pending_tasks: pending_tasks,
-      in_progress_tasks: in_progress_tasks,
-      high_priority_tasks: high_priority_tasks,
-      overdue_tasks: overdue_tasks
-    }
+      total_tasks = tasks.length
+      completed_tasks = tasks.count { |task| task["status"] == "completed" }
+      pending_tasks = tasks.count { |task| task["status"] == "pending" }
+      in_progress_tasks = tasks.count { |task| task["status"] == "in_progress" }
+      high_priority_tasks = tasks.count { |task| task["priority"] == "high" }
+
+      # Calculate overdue tasks
+      current_date = Date.current
+      overdue_tasks = tasks.count do |task|
+        task["due_date"] && Date.parse(task["due_date"]) < current_date && task["status"] != "completed"
+      end
+
+      completion_rate = total_tasks > 0 ? (completed_tasks.to_f / total_tasks * 100).round(2) : 0
+
+      {
+        total_tasks: total_tasks,
+        completed_tasks: completed_tasks,
+        completion_rate: completion_rate,
+        pending_tasks: pending_tasks,
+        in_progress_tasks: in_progress_tasks,
+        high_priority_tasks: high_priority_tasks,
+        overdue_tasks: overdue_tasks
+      }
+    else
+      # Fallback data if Task Service is unavailable
+      Rails.logger.error "Failed to fetch tasks from Task Service: #{all_tasks_response&.inspect}"
+      {
+        total_tasks: 0,
+        completed_tasks: 0,
+        completion_rate: 0,
+        pending_tasks: 0,
+        in_progress_tasks: 0,
+        high_priority_tasks: 0,
+        overdue_tasks: 0
+      }
+    end
   end
 
   def calculate_completion_rate
-    # 완료율 계산 로직
-    total = 150
-    completed = 85
-    rate = total > 0 ? (completed.to_f / total * 100).round(2) : 0
+    user_id = current_user["id"]
+    session_token = extract_session_token
+    task_client = TaskServiceClient.new
 
-    {
-      total: total,
-      completed: completed,
-      rate: rate
-    }
+    # Get all user tasks
+    all_tasks_response = task_client.get_user_tasks(user_id, session_token: session_token)
+
+    if all_tasks_response["success"]
+      tasks = all_tasks_response["tasks"] || []
+
+      total = tasks.length
+      completed = tasks.count { |task| task["status"] == "completed" }
+      rate = total > 0 ? (completed.to_f / total * 100).round(2) : 0
+
+      {
+        total: total,
+        completed: completed,
+        rate: rate
+      }
+    else
+      Rails.logger.error "Failed to fetch tasks for completion rate: #{all_tasks_response['message']}"
+      {
+        total: 0,
+        completed: 0,
+        rate: 0
+      }
+    end
   end
 
   def calculate_completion_trend
-    # 지난 30일간의 완료 추세 데이터
+    user_id = current_user["id"]
+    session_token = extract_session_token
+    task_client = TaskServiceClient.new
+
     trend_data = []
+    start_date = 30.days.ago.to_date
+    end_date = Date.current
 
-    (0..29).each do |days_ago|
-      date = Date.current - days_ago.days
-      # 실제로는 Analytics DB에서 해당 날짜의 완료 태스크 수 조회
-      completed_count = rand(0..8) # 예시 데이터
+    # Get completed tasks in date range
+    completed_tasks_response = task_client.get_completed_tasks_in_range(
+      user_id, start_date, end_date, session_token: session_token
+    )
 
-      trend_data.unshift({
-        date: date.strftime("%Y-%m-%d"),
-        completed_tasks: completed_count
-      })
+    if completed_tasks_response["success"]
+      completed_tasks = completed_tasks_response["tasks"] || []
+
+      # Group by completion date
+      tasks_by_date = completed_tasks.group_by do |task|
+        task["completed_at"] ? Date.parse(task["completed_at"]) : Date.current
+      end
+
+      (0..29).each do |days_ago|
+        date = Date.current - days_ago.days
+        completed_count = tasks_by_date[date]&.length || 0
+
+        trend_data.unshift({
+          date: date.strftime("%Y-%m-%d"),
+          completed_tasks: completed_count
+        })
+      end
+    else
+      Rails.logger.error "Failed to fetch completion trend data: #{completed_tasks_response['message']}"
+      # Fallback: empty trend data
+      (0..29).each do |days_ago|
+        date = Date.current - days_ago.days
+        trend_data.unshift({
+          date: date.strftime("%Y-%m-%d"),
+          completed_tasks: 0
+        })
+      end
     end
 
     trend_data
   end
 
   def calculate_priority_distribution
-    # 우선순위별 태스크 분포
-    {
-      "high" => 25,
-      "medium" => 75,
-      "low" => 50
-    }
+    user_id = current_user["id"]
+    session_token = extract_session_token
+    task_client = TaskServiceClient.new
+
+    # Get all user tasks
+    all_tasks_response = task_client.get_user_tasks(user_id, session_token: session_token)
+
+    if all_tasks_response["success"]
+      tasks = all_tasks_response["tasks"] || []
+
+      # Count tasks by priority
+      distribution = {
+        "high" => tasks.count { |task| task["priority"] == "high" },
+        "medium" => tasks.count { |task| task["priority"] == "medium" },
+        "low" => tasks.count { |task| task["priority"] == "low" }
+      }
+    else
+      Rails.logger.error "Failed to fetch tasks for priority distribution: #{all_tasks_response['message']}"
+      # Fallback: empty distribution
+      {
+        "high" => 0,
+        "medium" => 0,
+        "low" => 0
+      }
+    end
   end
 end

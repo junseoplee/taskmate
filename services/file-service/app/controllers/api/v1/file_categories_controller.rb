@@ -74,7 +74,7 @@ class Api::V1::FileCategoriesController < ApplicationController
   def set_file_category
     @file_category = FileCategory.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render_not_found('File category not found')
+    render_not_found("File category not found")
   end
 
   def file_category_params
@@ -85,7 +85,7 @@ class Api::V1::FileCategoriesController < ApplicationController
         allowed_types = JSON.parse(allowed_types)
       rescue JSON::ParserError
         # 쉼표로 구분된 문자열인 경우
-        allowed_types = allowed_types.split(',').map(&:strip)
+        allowed_types = allowed_types.split(",").map(&:strip)
       end
     end
 

@@ -1,11 +1,7 @@
 class FileServiceClient < BaseServiceClient
-  private
-
   def base_url
-    ENV.fetch('FILE_SERVICE_URL', 'http://localhost:3003')
+    ENV.fetch("FILE_SERVICE_URL", "http://localhost:3003")
   end
-
-  public
 
   def get_file_categories
     get("/api/v1/file_categories", headers: auth_headers)
@@ -13,11 +9,30 @@ class FileServiceClient < BaseServiceClient
     handle_error(e, "Failed to fetch file categories")
   end
 
-  def get_user_files(user_id, category_id = nil)
-    query_params = { user_id: user_id }
-    query_params[:category_id] = category_id if category_id
-    
-    get("/api/v1/file_attachments", headers: auth_headers, query: query_params)
+  def get_user_categories(user_id, session_token: nil)
+    get("/api/v1/file_categories", headers: auth_headers(session_token: session_token), query: { user_id: user_id })
+  rescue => e
+    handle_error(e, "Failed to fetch user categories")
+  end
+
+  def get_user_files(user_id, filters = {}, session_token: nil)
+    query_params = filters.merge({ user_id: user_id })
+
+    response = get("/api/v1/file_attachments", headers: auth_headers(session_token: session_token), query: query_params)
+
+    if response && response["data"]
+      {
+        "success" => true,
+        "files" => response["data"]["items"] || [],
+        "pagination" => response["data"]["pagination"]
+      }
+    else
+      {
+        "success" => false,
+        "files" => [],
+        "message" => "Failed to fetch files"
+      }
+    end
   rescue => e
     handle_error(e, "Failed to fetch user files")
   end
@@ -35,9 +50,59 @@ class FileServiceClient < BaseServiceClient
     handle_error(e, "Failed to upload file")
   end
 
-  def delete_file(file_id)
-    delete("/api/v1/file_attachments/#{file_id}", headers: auth_headers)
+  def create_file_attachment(file_data, session_token: nil)
+    post("/api/v1/file_attachments", {
+      headers: auth_headers(session_token: session_token),
+      body: { file_attachment: file_data }
+    })
+  rescue => e
+    handle_error(e, "Failed to create file attachment")
+  end
+
+  def delete_file(file_id, session_token: nil)
+    delete("/api/v1/file_attachments/#{file_id}", headers: auth_headers(session_token: session_token))
   rescue => e
     handle_error(e, "Failed to delete file")
+  end
+
+  def get_file_stats(user_id, session_token: nil)
+    # This method doesn't exist in the File Service API yet
+    # Return default stats for now
+    {
+      "success" => true,
+      "data" => {
+        "total_files" => 0,
+        "total_size" => 0
+      }
+    }
+  end
+
+  def get_file_download_url(file_id, session_token: nil)
+    response = get("/api/v1/file_attachments/#{file_id}", headers: auth_headers(session_token: session_token))
+
+    if response && response["data"]
+      {
+        "success" => true,
+        "download_url" => response["data"]["download_url"] || response["data"]["file_url"]
+      }
+    else
+      {
+        "success" => false,
+        "message" => "Failed to get download URL"
+      }
+    end
+  rescue => e
+    handle_error(e, "Failed to get download URL")
+  end
+
+  def create_category(user_id, category_data, session_token: nil)
+    post("/api/v1/file_categories", {
+      headers: auth_headers(session_token: session_token),
+      body: {
+        file_category: category_data.merge(user_id: user_id)
+      }
+    })
+  rescue => e
+    handle_error(e, "Failed to create category")
   end
 end

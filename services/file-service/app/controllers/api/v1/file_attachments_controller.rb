@@ -77,12 +77,13 @@ class Api::V1::FileAttachmentsController < ApplicationController
   def set_file_attachment
     @file_attachment = FileAttachment.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render_not_found('File attachment not found')
+    render_not_found("File attachment not found")
   end
 
   def file_attachment_params
     params.require(:file_attachment).permit(
       :original_filename,
+      :file_url,
       :content_type,
       :file_size,
       :attachable_type,
@@ -96,7 +97,8 @@ class Api::V1::FileAttachmentsController < ApplicationController
     {
       id: attachment.id,
       original_filename: attachment.original_filename,
-      storage_filename: attachment.storage_filename,
+      file_url: attachment.file_url,
+      download_url: attachment.download_url,
       content_type: attachment.content_type,
       file_size: attachment.file_size,
       human_file_size: attachment.human_file_size,
@@ -104,7 +106,6 @@ class Api::V1::FileAttachmentsController < ApplicationController
       attachable_id: attachment.attachable_id,
       file_category_id: attachment.file_category_id,
       upload_status: attachment.upload_status,
-      file_url: attachment.file_url,
       is_image: attachment.image?,
       created_at: attachment.created_at,
       updated_at: attachment.updated_at,

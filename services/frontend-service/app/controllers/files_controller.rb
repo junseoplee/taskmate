@@ -1,7 +1,9 @@
 class FilesController < ApplicationController
   def index
     @files_data = fetch_files_data
+    @files = @files_data[:files]
     @categories = fetch_categories
+    @file_stats = fetch_file_stats
   end
 
   def categories
@@ -10,62 +12,129 @@ class FilesController < ApplicationController
 
   def create_category
     file_client = FileServiceClient.new
-    result = file_client.create_category(current_user['id'], category_params)
-    
-    if result['success']
-      redirect_to files_path, notice: 'Category created successfully!'
+    result = file_client.create_category(current_user["id"], category_params)
+
+    if result["success"]
+      redirect_to files_path, notice: "Category created successfully!"
     else
-      flash[:alert] = result['message'] || 'Failed to create category.'
+      flash[:alert] = result["message"] || "Failed to create category."
       redirect_to files_path
     end
   end
 
   def upload
     file_client = FileServiceClient.new
-    result = file_client.upload_file(current_user['id'], file_params)
-    
-    if result['success']
+    session_token = current_session_token
+
+    # Create file attachment metadata
+    file_data = params[:file_attachment]
+    result = file_client.create_file_attachment(file_data, session_token: session_token)
+
+    if result["data"] || result["success"]
       if request.xhr?
-        render json: { 
-          success: true, 
-          message: 'File uploaded successfully!',
-          file: result['file']
+        render json: {
+          success: true,
+          message: "File uploaded successfully!",
+          file: result["data"]
         }
       else
-        redirect_to files_path, notice: 'File uploaded successfully!'
+        redirect_to files_path, notice: "File uploaded successfully!"
       end
     else
       if request.xhr?
-        render json: { 
-          success: false, 
-          message: result['message'] || 'Failed to upload file.'
-        }
+        render json: {
+          success: false,
+          message: result["message"] || "Failed to upload file."
+        }, status: :unprocessable_entity
       else
-        flash[:alert] = result['message'] || 'Failed to upload file.'
+        flash[:alert] = result["message"] || "Failed to upload file."
         redirect_to files_path
       end
+    end
+  rescue => e
+    Rails.logger.error "File upload error: #{e.message}"
+    if request.xhr?
+      render json: {
+        success: false,
+        message: "Upload failed due to server error."
+      }, status: :internal_server_error
+    else
+      flash[:alert] = "Upload failed due to server error."
+      redirect_to files_path
     end
   end
 
   def download
     file_client = FileServiceClient.new
     result = file_client.get_file_download_url(params[:id])
-    
-    if result['success']
-      redirect_to result['download_url'], allow_other_host: true
+
+    if result["success"]
+      redirect_to result["download_url"], allow_other_host: true
     else
-      redirect_to files_path, alert: result['message'] || 'Failed to download file.'
+      redirect_to files_path, alert: result["message"] || "Failed to download file."
     end
   end
 
   def destroy
     file_client = FileServiceClient.new
-    result = file_client.delete_file(params[:id])
-    
-    if result['success']
-      redirect_to files_path, notice: 'File deleted successfully!'
+    result = file_client.delete_file(params[:id], session_token: current_session_token)
+
+    if result["success"]
+      redirect_to files_path, notice: "File deleted successfully!"
     else
-      redirect_to files_path, alert: result['message'] || 'Failed to delete file.'
+      redirect_to files_path, alert: result["message"] || "Failed to delete file."
+    end
+  end
+
+  def add_url
+    file_client = FileServiceClient.new
+    session_token = current_session_token
+
+    file_data = {
+      file_attachment: {
+        filename: params[:filename],
+        file_url: params[:file_url],
+        content_type: params[:content_type] || "application/octet-stream",
+        file_size: 0, # URL files don't have size
+        attachable_type: "Task",
+        attachable_id: params[:task_id] || 23, # Default task
+        file_category_id: params[:category_id] || 1
+      }
+    }
+
+    result = file_client.create_file_attachment(file_data[:file_attachment], session_token: session_token)
+
+    if result["data"] || result["success"]
+      if request.xhr?
+        render json: {
+          success: true,
+          message: "URL file added successfully!",
+          file: result["data"]
+        }
+      else
+        redirect_to files_path, notice: "URL file added successfully!"
+      end
+    else
+      if request.xhr?
+        render json: {
+          success: false,
+          message: result["message"] || "Failed to add URL file."
+        }, status: :unprocessable_entity
+      else
+        flash[:alert] = result["message"] || "Failed to add URL file."
+        redirect_to files_path
+      end
+    end
+  rescue => e
+    Rails.logger.error "URL file add error: #{e.message}"
+    if request.xhr?
+      render json: {
+        success: false,
+        message: "Failed to add URL file due to server error."
+      }, status: :internal_server_error
+    else
+      flash[:alert] = "Failed to add URL file due to server error."
+      redirect_to files_path
     end
   end
 
@@ -73,14 +142,14 @@ class FilesController < ApplicationController
 
   def fetch_files_data
     file_client = FileServiceClient.new
-    
+
     begin
-      response = file_client.get_user_files(current_user['id'], filter_params)
-      
-      if response['success']
+      response = file_client.get_user_files(current_user["id"], filter_params, session_token: current_session_token)
+
+      if response["success"]
         {
-          files: response['files'] || [],
-          pagination: response['pagination'] || {},
+          files: response["files"] || [],
+          pagination: response["pagination"] || {},
           filters: filter_params
         }
       else
@@ -88,7 +157,7 @@ class FilesController < ApplicationController
           files: [],
           pagination: {},
           filters: filter_params,
-          error: response['message']
+          error: response["message"]
         }
       end
     rescue => e
@@ -97,20 +166,36 @@ class FilesController < ApplicationController
         files: [],
         pagination: {},
         filters: filter_params,
-        error: 'Unable to load file data.'
+        error: "Unable to load file data."
       }
     end
   end
 
   def fetch_categories
     file_client = FileServiceClient.new
-    
+
     begin
-      response = file_client.get_user_categories(current_user['id'])
-      response['success'] ? (response['categories'] || []) : []
+      response = file_client.get_user_categories(current_user["id"], session_token: current_session_token)
+      response["success"] ? (response["categories"] || []) : []
     rescue => e
       Rails.logger.error "Category fetch error: #{e.message}"
       []
+    end
+  end
+
+  def fetch_file_stats
+    file_client = FileServiceClient.new
+
+    begin
+      response = file_client.get_file_stats(current_user["id"], session_token: current_session_token)
+      if response["success"]
+        response["data"] || { total_files: 0 }
+      else
+        { total_files: 0 }
+      end
+    rescue => e
+      Rails.logger.error "File stats fetch error: #{e.message}"
+      { total_files: 0 }
     end
   end
 

@@ -19,7 +19,7 @@ class ApplicationController < ActionController::API
     render json: response, status: status
   end
 
-  def render_not_found(message = 'Resource not found')
+  def render_not_found(message = "Resource not found")
     render json: { message: message }, status: :not_found
   end
 end

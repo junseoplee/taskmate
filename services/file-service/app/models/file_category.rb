@@ -7,7 +7,7 @@ class FileCategory < ApplicationRecord
   before_save :normalize_name
   serialize :allowed_file_types, type: Array, coder: JSON
 
-  scope :by_name, ->(name) { where('LOWER(name) = ?', name.downcase) }
+  scope :by_name, ->(name) { where("LOWER(name) = ?", name.downcase) }
 
   def allows_content_type?(content_type)
     return true if allowed_file_types.blank?
@@ -34,26 +34,26 @@ class FileCategory < ApplicationRecord
   def self.create_defaults
     default_categories = [
       {
-        name: 'documents',
-        description: '문서 파일을 위한 카테고리',
-        allowed_file_types: [ 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain' ],
+        name: "documents",
+        description: "문서 파일을 위한 카테고리",
+        allowed_file_types: [ "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain" ],
         max_file_size: 10.megabytes
       },
       {
-        name: 'images',
-        description: '이미지 파일을 위한 카테고리',
-        allowed_file_types: [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ],
+        name: "images",
+        description: "이미지 파일을 위한 카테고리",
+        allowed_file_types: [ "image/jpeg", "image/png", "image/gif", "image/webp" ],
         max_file_size: 5.megabytes
       },
       {
-        name: 'videos',
-        description: '비디오 파일을 위한 카테고리',
-        allowed_file_types: [ 'video/mp4', 'video/avi', 'video/mov', 'video/webm' ],
+        name: "videos",
+        description: "비디오 파일을 위한 카테고리",
+        allowed_file_types: [ "video/mp4", "video/avi", "video/mov", "video/webm" ],
         max_file_size: 100.megabytes
       },
       {
-        name: 'others',
-        description: '기타 파일을 위한 카테고리',
+        name: "others",
+        description: "기타 파일을 위한 카테고리",
         allowed_file_types: [],
         max_file_size: 10.megabytes
       }

@@ -8,7 +8,7 @@ RSpec.describe "TasksController", type: :request do
       'email' => 'test@taskmate.com'
     }
   end
-  
+
   let(:mock_tasks_response) do
     {
       'success' => true,
@@ -44,7 +44,7 @@ RSpec.describe "TasksController", type: :request do
     # 인증 우회 설정
     allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(mock_user)
     allow_any_instance_of(ApplicationController).to receive(:authenticate_user!).and_return(true)
-    
+
     # TaskServiceClient 모킹
     mock_client = instance_double(TaskServiceClient)
     allow(TaskServiceClient).to receive(:new).and_return(mock_client)
@@ -54,7 +54,7 @@ RSpec.describe "TasksController", type: :request do
   describe "GET /tasks" do
     it "displays the tasks page" do
       get "/tasks"
-      
+
       expect(response).to have_http_status(200)
       expect(response.body).to include("Task Management")
       expect(response.body).to include("프로젝트 마감 준비")
@@ -63,30 +63,30 @@ RSpec.describe "TasksController", type: :request do
 
     it "shows task details correctly" do
       get "/tasks"
-      
+
       # 상태 표시 확인
       expect(response.body).to include("In Progress")
       expect(response.body).to include("Pending")
-      
+
       # 우선순위 표시 확인
       expect(response.body).to include("High")
-      
+
       # 날짜 표시 확인
       expect(response.body).to include("2025-08-25")
     end
 
     it "shows action buttons" do
       get "/tasks"
-      
+
       # 뷰, 편집, 삭제 버튼 확인
       expect(response.body).to include('href="/tasks/1"')
       expect(response.body).to include('href="/tasks/1/edit"')
       expect(response.body).to include('data-confirm="Are you sure you want to delete this task?"')
     end
-    
+
     it "shows New Task button" do
       get "/tasks"
-      
+
       expect(response.body).to include("New Task")
       expect(response.body).to include('href="/tasks/new"')
     end
@@ -109,7 +109,7 @@ RSpec.describe "TasksController", type: :request do
 
     it "shows empty state message" do
       get "/tasks"
-      
+
       expect(response).to have_http_status(200)
       expect(response.body).to include("No tasks found")
       expect(response.body).to include("Start by creating your first task")
@@ -132,7 +132,7 @@ RSpec.describe "TasksController", type: :request do
 
     it "handles API errors gracefully" do
       get "/tasks"
-      
+
       expect(response).to have_http_status(200)
       expect(response.body).to include("No tasks found")
     end

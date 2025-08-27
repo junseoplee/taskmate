@@ -45,10 +45,19 @@ module TaskService
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore, key: '_task_service_session'
 
+    # Allow Docker container hostnames for Rails host authorization
+    config.hosts << "task-service"
+    config.hosts << "frontend-service" 
+    config.hosts << "user-service"
+    config.hosts << "analytics-service"
+    config.hosts << "file-service"
+
     # CORS configuration
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins 'localhost:3000', 'localhost:3001', 'localhost:3002', 'localhost:3003'
+        origins 'localhost:3000', 'localhost:3001', 'localhost:3002', 'localhost:3003',
+                'frontend-service:3100', 'user-service:3000', 'task-service:3001', 
+                'analytics-service:3002', 'file-service:3003'
         resource '*',
           headers: :any,
           methods: [ :get, :post, :put, :patch, :delete, :options, :head ],

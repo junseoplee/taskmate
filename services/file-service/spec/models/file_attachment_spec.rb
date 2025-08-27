@@ -41,14 +41,13 @@ RSpec.describe FileAttachment, type: :model do
   describe 'file operations' do
     let(:file_attachment) { create(:file_attachment) }
 
-    it 'generates a unique storage filename' do
-      expect(file_attachment.storage_filename).to be_present
-      expect(file_attachment.storage_filename).not_to eq(file_attachment.original_filename)
+    it 'has a valid file URL' do
+      expect(file_attachment.file_url).to be_present
+      expect(file_attachment.file_url).to match(/^https?:\/\/.+/)
     end
 
-    it 'has a file URL' do
-      expect(file_attachment.file_url).to be_present
-      expect(file_attachment.file_url).to include(file_attachment.storage_filename)
+    it 'provides download URL' do
+      expect(file_attachment.download_url).to eq(file_attachment.file_url)
     end
 
     it 'can determine if it is an image' do

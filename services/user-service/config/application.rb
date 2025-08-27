@@ -41,6 +41,13 @@ module UserService
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Allow Docker container hostnames for Rails host authorization
+    config.hosts << "user-service"
+    config.hosts << "frontend-service"
+    config.hosts << "task-service"
+    config.hosts << "analytics-service"
+    config.hosts << "file-service"
+
     # Enable cookies for authentication (simpler approach)
     config.middleware.use ActionDispatch::Cookies
   end

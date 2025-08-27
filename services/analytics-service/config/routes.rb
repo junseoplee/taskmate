@@ -9,6 +9,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Analytics dashboard and main stats
       get "analytics/dashboard", to: "analytics#dashboard"
+      get "analytics/user", to: "analytics#dashboard"  # Alias for dashboard
 
       # Task-specific analytics
       get "analytics/tasks/completion-rate", to: "analytics#completion_rate"

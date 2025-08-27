@@ -9,6 +9,7 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
   let(:valid_attributes) do
     {
       original_filename: 'test.pdf',
+      file_url: 'https://example.com/files/test.pdf',
       content_type: 'application/pdf',
       file_size: 1.megabyte,
       attachable_type: 'Task',
@@ -105,7 +106,8 @@ RSpec.describe Api::V1::FileAttachmentsController, type: :controller do
 
         data = JSON.parse(response.body)['data']
         expect(data['original_filename']).to eq('test.pdf')
-        expect(data['storage_filename']).to be_present
+        expect(data['file_url']).to eq('https://example.com/files/test.pdf')
+        expect(data['download_url']).to eq('https://example.com/files/test.pdf')
       end
     end
 

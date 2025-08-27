@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :file_attachment do
     original_filename { Faker::File.file_name }
+    file_url { Faker::Internet.url(host: 'example.com', path: "/files/#{Faker::Alphanumeric.alpha(number: 10)}.pdf") }
     content_type { 'application/pdf' }
     file_size { rand(1.kilobyte..5.megabytes) }
     attachable_type { 'Task' }
@@ -11,16 +12,19 @@ FactoryBot.define do
 
     trait :image do
       original_filename { "image_#{rand(1000)}.jpg" }
+      file_url { Faker::Internet.url(host: 'example.com', path: "/files/#{Faker::Alphanumeric.alpha(number: 10)}.jpg") }
       content_type { 'image/jpeg' }
     end
 
     trait :document do
       original_filename { "document_#{rand(1000)}.pdf" }
+      file_url { Faker::Internet.url(host: 'example.com', path: "/files/#{Faker::Alphanumeric.alpha(number: 10)}.pdf") }
       content_type { 'application/pdf' }
     end
 
     trait :text do
       original_filename { "text_#{rand(1000)}.txt" }
+      file_url { Faker::Internet.url(host: 'example.com', path: "/files/#{Faker::Alphanumeric.alpha(number: 10)}.txt") }
       content_type { 'text/plain' }
     end
 

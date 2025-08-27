@@ -59,13 +59,13 @@
       </div>
     </div>
 
-    <!-- Average Time -->
+    <!-- In Progress Tasks -->
     <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm font-medium text-gray-600">Average Completion Time</p>
-          <p class="text-3xl font-bold text-yellow-600 mt-2">2.3<span class="text-lg">days</span></p>
-          <p class="text-xs text-red-600 mt-1">+0.5 days from last month</p>
+          <p class="text-sm font-medium text-gray-600">In Progress Tasks</p>
+          <p class="text-3xl font-bold text-yellow-600 mt-2"><%= @analytics_data&.dig('in_progress_tasks') || 0 %></p>
+          <p class="text-xs text-gray-600 mt-1">Currently active</p>
         </div>
         <div class="bg-yellow-100 p-3 rounded-full">
           <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,18 +98,29 @@
     <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
       <h2 class="text-xl font-bold text-gray-900 mb-4">Task Completion Trend</h2>
       <div class="h-80">
-        <!-- Chart placeholder with sample data visualization -->
+        <!-- Real completion trend data visualization -->
         <div class="h-full flex items-end justify-between space-x-2">
-          <% completion_data = [45, 52, 48, 61, 55, 67, 73, 69, 76, 82, 78, 85] %>
-          <% months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] %>
-          <% max_value = completion_data.max %>
-          <% completion_data.each_with_index do |value, index| %>
-            <div class="flex-1 flex flex-col items-center">
-              <div class="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t" 
-                   style="height: <%= (value.to_f / max_value * 100).round %>%"
-                   title="<%= months[index] %>: <%= value %>%">
+          <% 
+            trend_data = @completion_trend_data&.dig('trend_data') || []
+            # Display last 30 days of data, showing every 5th day to avoid crowding
+            display_data = trend_data.last(30).each_with_index.select { |data, index| index % 5 == 0 || index == trend_data.length - 1 }
+            max_value = [trend_data.map { |d| d['completed_tasks'] }.max || 1, 1].max
+          %>
+          <% if display_data.any? %>
+            <% display_data.each do |data, original_index| %>
+              <% completed_tasks = data['completed_tasks'] || 0 %>
+              <% date_label = Date.parse(data['date']).strftime('%m/%d') rescue "N/A" %>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t" 
+                     style="height: <%= max_value > 0 ? (completed_tasks.to_f / max_value * 100).round : 0 %>%"
+                     title="<%= date_label %>: <%= completed_tasks %> tasks">
+                </div>
+                <p class="text-xs text-gray-600 mt-2"><%= date_label %></p>
               </div>
-              <p class="text-xs text-gray-600 mt-2"><%= months[index] %></p>
+            <% end %>
+          <% else %>
+            <div class="w-full text-center text-gray-500">
+              <p>No completion trend data available</p>
             </div>
           <% end %>
         </div>
@@ -127,20 +138,37 @@
           </div>
           <div class="absolute inset-0 flex items-center justify-center">
             <div class="text-center">
-              <p class="text-2xl font-bold text-gray-900">127</p>
+              <p class="text-2xl font-bold text-gray-900"><%= @analytics_data&.dig('total_tasks') || 0 %></p>
               <p class="text-sm text-gray-600">Total Tasks</p>
             </div>
           </div>
         </div>
       </div>
       <div class="mt-4 grid grid-cols-2 gap-4">
-        <% priority_stats = [['High', 25, 'red'], ['Medium', 68, 'yellow'], ['Low', 34, 'green']] %>
-        <% priority_stats.each do |label, count, color| %>
-          <div class="flex items-center space-x-2">
-            <div class="w-4 h-4 bg-<%= color %>-500 rounded-full"></div>
-            <span class="text-sm text-gray-700"><%= label %>: <%= count %></span>
-          </div>
-        <% end %>
+        <% 
+          distribution = @priority_distribution_data&.dig('distribution') || {}
+          high_priority = distribution['high'] || 0
+          medium_priority = distribution['medium'] || 0
+          low_priority = distribution['low'] || 0
+          total_priority_tasks = high_priority + medium_priority + low_priority
+          total_tasks = @priority_distribution_data&.dig('total_tasks') || total_priority_tasks
+        %>
+        <div class="flex items-center space-x-2">
+          <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+          <span class="text-sm text-gray-700">High: <%= high_priority %></span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="w-4 h-4 bg-yellow-500 rounded-full"></div>
+          <span class="text-sm text-gray-700">Medium: <%= medium_priority %></span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+          <span class="text-sm text-gray-700">Low: <%= low_priority %></span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+          <span class="text-sm text-gray-700">Total: <%= total_tasks %></span>
+        </div>
       </div>
     </div>
   </div>
@@ -223,20 +251,20 @@
         <div class="space-y-2">
           <div class="flex justify-between">
             <span class="text-sm text-gray-600">Completed Tasks</span>
-            <span class="text-sm font-medium text-gray-900">18</span>
+            <span class="text-sm font-medium text-gray-900"><%= @analytics_data&.dig('completed_tasks') || 0 %></span>
           </div>
           <div class="flex justify-between">
             <span class="text-sm text-gray-600">In Progress</span>
-            <span class="text-sm font-medium text-gray-900">7</span>
+            <span class="text-sm font-medium text-gray-900"><%= @analytics_data&.dig('in_progress_tasks') || 0 %></span>
           </div>
           <div class="flex justify-between">
-            <span class="text-sm text-gray-600">New Tasks</span>
-            <span class="text-sm font-medium text-gray-900">12</span>
+            <span class="text-sm text-gray-600">Pending Tasks</span>
+            <span class="text-sm font-medium text-gray-900"><%= @analytics_data&.dig('pending_tasks') || 0 %></span>
           </div>
           <div class="pt-2 border-t">
             <div class="flex justify-between">
               <span class="text-sm font-medium text-green-600">Completion Rate</span>
-              <span class="text-sm font-medium text-green-600">72%</span>
+              <span class="text-sm font-medium text-green-600"><%= @analytics_data&.dig('completion_rate') || 0 %>%</span>
             </div>
           </div>
         </div>
@@ -247,16 +275,16 @@
         <h3 class="text-lg font-semibold text-gray-800 mb-3">This Month</h3>
         <div class="space-y-2">
           <div class="flex justify-between">
-            <span class="text-sm text-gray-600">Completed Tasks</span>
-            <span class="text-sm font-medium text-gray-900">89</span>
+            <span class="text-sm text-gray-600">Total Tasks</span>
+            <span class="text-sm font-medium text-gray-900"><%= @analytics_data&.dig('total_tasks') || 0 %></span>
           </div>
           <div class="flex justify-between">
-            <span class="text-sm text-gray-600">Average Time</span>
-            <span class="text-sm font-medium text-gray-900">2.1 days</span>
+            <span class="text-sm text-gray-600">Completed Tasks</span>
+            <span class="text-sm font-medium text-gray-900"><%= @analytics_data&.dig('completed_tasks') || 0 %></span>
           </div>
           <div class="flex justify-between">
             <span class="text-sm text-gray-600">Overdue Tasks</span>
-            <span class="text-sm font-medium text-red-600">8</span>
+            <span class="text-sm font-medium text-red-600"><%= @analytics_data&.dig('overdue_tasks') || 0 %></span>
           </div>
           <div class="pt-2 border-t">
             <div class="flex justify-between">

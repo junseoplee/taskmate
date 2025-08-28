@@ -6,7 +6,16 @@ class Api::V1::FileAttachmentsController < ApplicationController
 
     # 필터링
     attachments = attachments.by_category(params[:category_id]) if params[:category_id].present?
-    attachments = attachments.by_content_type(params[:content_type]) if params[:content_type].present?
+
+    # file_type 또는 content_type 파라미터 처리
+    content_type_param = params[:file_type] || params[:content_type]
+    attachments = attachments.by_content_type(content_type_param) if content_type_param.present?
+
+    # 검색 필터링 추가
+    if params[:search].present?
+      search_term = "%#{params[:search]}%"
+      attachments = attachments.where("original_filename ILIKE ?", search_term)
+    end
 
     if params[:attachable_type].present? && params[:attachable_id].present?
       attachments = attachments.where(
@@ -14,6 +23,9 @@ class Api::V1::FileAttachmentsController < ApplicationController
         attachable_id: params[:attachable_id]
       )
     end
+
+    # 최신순 정렬
+    attachments = attachments.order(created_at: :desc)
 
     # 페이지네이션 (기본 20개)
     page = params[:page]&.to_i || 1
@@ -72,6 +84,22 @@ class Api::V1::FileAttachmentsController < ApplicationController
     render_success(attachment_json(@file_attachment))
   end
 
+  def statistics
+    user_id = params[:user_id]
+
+    unless user_id.present?
+      return render_error({ user_id: [ "User ID is required" ] }, status: :bad_request)
+    end
+
+    stats = FileAttachment.statistics_for_user(user_id)
+
+    render_success({
+      statistics: stats,
+      generated_at: Time.current,
+      user_id: user_id
+    })
+  end
+
   private
 
   def set_file_attachment
@@ -98,17 +126,8 @@ class Api::V1::FileAttachmentsController < ApplicationController
       id: attachment.id,
       original_filename: attachment.original_filename,
       file_url: attachment.file_url,
-      download_url: attachment.download_url,
-      content_type: attachment.content_type,
-      file_size: attachment.file_size,
-      human_file_size: attachment.human_file_size,
-      attachable_type: attachment.attachable_type,
-      attachable_id: attachment.attachable_id,
       file_category_id: attachment.file_category_id,
-      upload_status: attachment.upload_status,
-      is_image: attachment.image?,
       created_at: attachment.created_at,
-      updated_at: attachment.updated_at,
       file_category: attachment.file_category ? {
         id: attachment.file_category.id,
         name: attachment.file_category.name

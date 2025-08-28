@@ -12,7 +12,18 @@ Rails.application.routes.draw do
         end
       end
 
+      # New simplified files API
+      resources :simple_files do
+        collection do
+          get :statistics
+        end
+      end
+
+      # Legacy file_attachments for backward compatibility
       resources :file_attachments do
+        collection do
+          get :statistics
+        end
         member do
           post :upload_complete
           post :upload_failed

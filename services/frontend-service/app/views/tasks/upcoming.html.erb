@@ -1,0 +1,245 @@
+<% content_for :title, "Upcoming Tasks - TaskMate" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-blue-600">Upcoming Tasks</h1>
+        <p class="mt-2 text-gray-600">
+          Tasks due in the next 
+          <%= @date_range && @date_range['days'] ? pluralize(@date_range['days'], 'day') : '7 days' %>
+        </p>
+        <% if @date_range && @date_range['end_date'] %>
+          <p class="mt-1 text-sm text-gray-500">
+            Through <%= Date.parse(@date_range['end_date']).strftime('%B %d, %Y') %>
+          </p>
+        <% end %>
+      </div>
+      <div class="flex space-x-3">
+        <%= link_to tasks_path, class: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors shadow-sm flex items-center space-x-2" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+          </svg>
+          <span>All Tasks</span>
+        <% end %>
+        <%= link_to overdue_tasks_path, class: "bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-6 rounded-lg transition-colors shadow-sm flex items-center space-x-2" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          <span>Overdue</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Range Filter -->
+  <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
+    <%= form_with url: upcoming_tasks_path, method: :get, local: true, class: "flex items-center space-x-4" do |form| %>
+      <label class="text-sm font-medium text-gray-700">View tasks due in the next:</label>
+      <%= form.select :days, 
+          options_for_select([
+            ['3 days', 3],
+            ['7 days', 7],
+            ['14 days', 14],
+            ['30 days', 30]
+          ], params[:days] || 7),
+          {},
+          { class: "px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" } %>
+      <%= form.submit "Update View", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
+    <% end %>
+  </div>
+
+  <!-- Upcoming Summary -->
+  <% if @tasks && @tasks.any? %>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+      <div class="flex items-center">
+        <svg class="w-8 h-8 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <h3 class="text-lg font-semibold text-blue-800">
+            <%= pluralize(@total || @tasks.count, 'upcoming task') %>
+          </h3>
+          <p class="text-blue-700 mt-1">
+            Tasks due in the next <%= @date_range && @date_range['days'] ? @date_range['days'] : '7' %> days
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks Grouped by Due Date -->
+    <div class="space-y-6">
+      <% tasks_by_date = @tasks.group_by { |task| task['due_date'] ? Date.parse(task['due_date']) : nil } %>
+      <% tasks_by_date.sort_by { |date, _| date || Date.new(9999, 1, 1) }.each do |due_date, date_tasks| %>
+        <div class="bg-white rounded-lg shadow-md border border-gray-200">
+          <!-- Date Header -->
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <% if due_date %>
+                  <% days_until = (due_date - Date.today).to_i %>
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    <%= due_date.strftime('%A, %B %d, %Y') %>
+                    <% if days_until == 0 %>
+                      <span class="text-sm font-normal text-orange-600">(Today)</span>
+                    <% elsif days_until == 1 %>
+                      <span class="text-sm font-normal text-yellow-600">(Tomorrow)</span>
+                    <% elsif days_until > 1 %>
+                      <span class="text-sm font-normal text-gray-500">(In <%= pluralize(days_until, 'day') %>)</span>
+                    <% end %>
+                  </h3>
+                <% else %>
+                  <h3 class="text-lg font-semibold text-gray-500">No Due Date</h3>
+                <% end %>
+                <p class="text-sm text-gray-600 mt-1">
+                  <%= pluralize(date_tasks.count, 'task') %>
+                </p>
+              </div>
+              <% if due_date && (due_date - Date.today).to_i <= 1 %>
+                <div class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
+                  Due Soon
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Tasks List -->
+          <div class="divide-y divide-gray-200">
+            <% date_tasks.each do |task| %>
+              <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-3">
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900">
+                          <%= link_to task['title'], task_path(task['id']), class: "hover:text-blue-600" %>
+                        </h4>
+                        <% if task['description'].present? %>
+                          <p class="text-sm text-gray-500 mt-1">
+                            <%= truncate(task['description'], length: 120) %>
+                          </p>
+                        <% end %>
+                        <div class="flex items-center space-x-4 mt-2">
+                          <!-- Status -->
+                          <% status_colors = { 'pending' => 'gray', 'in_progress' => 'blue', 'completed' => 'green' } %>
+                          <% status_labels = { 'pending' => 'Pending', 'in_progress' => 'In Progress', 'completed' => 'Completed' } %>
+                          <% status_color = status_colors[task['status']] || 'gray' %>
+                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-<%= status_color %>-100 text-<%= status_color %>-800">
+                            <%= status_labels[task['status']] || task['status'] %>
+                          </span>
+                          
+                          <!-- Priority -->
+                          <% priority_colors = { 'high' => 'red', 'medium' => 'yellow', 'low' => 'green' } %>
+                          <% priority_labels = { 'high' => 'High', 'medium' => 'Medium', 'low' => 'Low' } %>
+                          <% priority_color = priority_colors[task['priority']] || 'gray' %>
+                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-<%= priority_color %>-100 text-<%= priority_color %>-800">
+                            <%= priority_labels[task['priority']] || 'Medium' %>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center space-x-2 ml-4">
+                    <% if task['status'] != 'completed' %>
+                      <%= button_to complete_task_path(task['id']), 
+                          method: :patch, 
+                          data: { confirm: 'Mark this task as completed?', turbo: true }, 
+                          class: "bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded text-xs font-medium transition-colors border-0" do %>
+                        Complete
+                      <% end %>
+                    <% end %>
+                    <%= link_to task_path(task['id']), class: "text-blue-600 hover:text-blue-900" do %>
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                    <% end %>
+                    <%= link_to edit_task_path(task['id']), class: "text-yellow-600 hover:text-yellow-900" do %>
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 bg-gray-50 rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="text-center">
+          <%= link_to upcoming_tasks_path(days: 3), class: "block bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors" do %>
+            <svg class="w-8 h-8 text-orange-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="font-medium text-gray-900">Next 3 Days</div>
+            <div class="text-sm text-gray-500">Most urgent</div>
+          <% end %>
+        </div>
+        
+        <div class="text-center">
+          <%= link_to new_task_path, class: "block bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors" do %>
+            <svg class="w-8 h-8 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <div class="font-medium text-gray-900">New Task</div>
+            <div class="text-sm text-gray-500">Add a task</div>
+          <% end %>
+        </div>
+        
+        <div class="text-center">
+          <%= link_to search_tasks_path, class: "block bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors" do %>
+            <svg class="w-8 h-8 text-green-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <div class="font-medium text-gray-900">Search Tasks</div>
+            <div class="text-sm text-gray-500">Find specific tasks</div>
+          <% end %>
+        </div>
+        
+        <div class="text-center">
+          <%= link_to statistics_tasks_path, class: "block bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors" do %>
+            <svg class="w-8 h-8 text-purple-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <div class="font-medium text-gray-900">Statistics</div>
+            <div class="text-sm text-gray-500">View analytics</div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+  <% else %>
+    <!-- No Upcoming Tasks -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+      <svg class="w-16 h-16 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <h3 class="text-xl font-semibold text-blue-800 mb-2">No upcoming tasks</h3>
+      <p class="text-blue-700 mb-6">
+        You don't have any tasks due in the next 
+        <%= @date_range && @date_range['days'] ? @date_range['days'] : '7' %> days.
+        Time to plan ahead!
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
+        <%= link_to tasks_path, class: "bg-white hover:bg-gray-50 text-blue-700 border border-blue-200 font-medium py-2 px-4 rounded-lg transition-colors" do %>
+          View All Tasks
+        <% end %>
+        <%= link_to upcoming_tasks_path(days: 30), class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" do %>
+          Next 30 Days
+        <% end %>
+        <%= link_to new_task_path, class: "bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" do %>
+          New Task
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

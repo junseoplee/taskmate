@@ -80,8 +80,8 @@
                   <% end %>
 
                   <% if @task['status'] != 'completed' %>
-                    <%= link_to task_path(@task['id']), method: :patch,
-                        data: { confirm: 'Mark this task as completed?' },
+                    <%= button_to complete_task_path(@task['id']), method: :patch,
+                        data: { confirm: 'Mark this task as completed?', turbo: true },
                         class: "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
                       <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -270,8 +270,8 @@
               <% end %>
 
               <% if @task['status'] != 'completed' %>
-                <%= link_to task_path(@task['id']), method: :patch,
-                    data: { confirm: 'Mark this task as completed?' },
+                <%= button_to complete_task_path(@task['id']), method: :patch,
+                    data: { confirm: 'Mark this task as completed?', turbo: true },
                     class: "w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -280,8 +280,8 @@
                 <% end %>
               <% end %>
 
-              <%= link_to task_path(@task['id']), method: :delete,
-                  data: { confirm: 'Are you sure you want to delete this task? This action cannot be undone.' },
+              <%= button_to task_path(@task['id']), method: :delete,
+                  data: { confirm: 'Are you sure you want to delete this task? This action cannot be undone.', turbo: true },
                   class: "w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" do %>
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>

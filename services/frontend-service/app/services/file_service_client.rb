@@ -10,7 +10,19 @@ class FileServiceClient < BaseServiceClient
   end
 
   def get_user_categories(user_id, session_token: nil)
-    get("/api/v1/file_categories", headers: auth_headers(session_token: session_token), query: { user_id: user_id })
+    response = get("/api/v1/file_categories", headers: auth_headers(session_token: session_token), query: { user_id: user_id })
+
+    if response && response["data"]
+      {
+        "success" => true,
+        "categories" => response["data"]
+      }
+    else
+      {
+        "success" => false,
+        "categories" => []
+      }
+    end
   rescue => e
     handle_error(e, "Failed to fetch user categories")
   end
@@ -104,5 +116,61 @@ class FileServiceClient < BaseServiceClient
     })
   rescue => e
     handle_error(e, "Failed to create category")
+  end
+
+  # New Simple Files API methods
+  def create_simple_file(file_data, session_token: nil)
+    post("/api/v1/simple_files", {
+      headers: auth_headers(session_token: session_token),
+      body: { simple_file: file_data }
+    })
+  rescue => e
+    handle_error(e, "Failed to create simple file")
+  end
+
+  def get_simple_files(user_id, filters = {}, session_token: nil)
+    query_params = filters.merge({ user_id: user_id })
+
+    response = get("/api/v1/simple_files", headers: auth_headers(session_token: session_token), query: query_params)
+
+    if response && response["data"]
+      {
+        "success" => true,
+        "files" => response["data"]["files"] || [],
+        "pagination" => response["data"]["pagination"]
+      }
+    else
+      {
+        "success" => false,
+        "files" => [],
+        "message" => "Failed to fetch files"
+      }
+    end
+  rescue => e
+    handle_error(e, "Failed to fetch simple files")
+  end
+
+  def delete_simple_file(file_id, session_token: nil)
+    delete("/api/v1/simple_files/#{file_id}", headers: auth_headers(session_token: session_token))
+  rescue => e
+    handle_error(e, "Failed to delete simple file")
+  end
+
+  def get_simple_file_stats(user_id, session_token: nil)
+    response = get("/api/v1/simple_files/statistics", headers: auth_headers(session_token: session_token), query: { user_id: user_id })
+
+    if response && response["data"]
+      {
+        "success" => true,
+        "data" => response["data"]["statistics"] || {}
+      }
+    else
+      {
+        "success" => false,
+        "data" => { "total_files" => 0 }
+      }
+    end
+  rescue => e
+    handle_error(e, "Failed to fetch simple file stats")
   end
 end

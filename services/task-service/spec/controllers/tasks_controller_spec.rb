@@ -13,6 +13,7 @@ RSpec.describe Api::V1::TasksController, type: :controller do
     # Mock successful authentication for all tests
     allow(controller).to receive(:authenticate_user!).and_return(true)
     allow(controller).to receive(:current_user).and_return(current_user)
+    controller.instance_variable_set(:@current_user_id, 1)
   end
 
   describe "GET #index" do
@@ -268,9 +269,217 @@ RSpec.describe Api::V1::TasksController, type: :controller do
       # Set valid session token in cookies
       request.cookies[:session_token] = 'valid_token'
 
+      # Mock successful authentication for valid token
+      allow(controller).to receive(:authenticate_user!).and_return(true)
+      allow(controller).to receive(:current_user).and_return(current_user)
+      controller.instance_variable_set(:@current_user_id, 1)
+
       get :index
 
       expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "PATCH #complete" do
+    let!(:task) { create(:task, user_id: 1, status: 'in_progress') }
+
+    it "marks task as completed" do
+      patch :complete, params: { id: task.id }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['task']['status']).to eq('completed')
+      expect(json_response['task']['completed_at']).to be_present
+    end
+
+    it "returns error for non-existent task" do
+      patch :complete, params: { id: 99999 }
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "GET #search" do
+    let!(:task1) { create(:task, user_id: 1, title: 'Ruby programming', description: 'Learn Rails') }
+    let!(:task2) { create(:task, user_id: 1, title: 'Python task', description: 'Django development') }
+    let!(:task3) { create(:task, user_id: 1, title: 'JavaScript work', description: 'React application') }
+
+    it "searches tasks by title" do
+      get :search, params: { q: 'Ruby' }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].length).to eq(1)
+      expect(json_response['tasks'].first['title']).to include('Ruby')
+      expect(json_response['query']).to eq('Ruby')
+    end
+
+    it "searches tasks by description" do
+      get :search, params: { q: 'Rails' }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].length).to eq(1)
+      expect(json_response['tasks'].first['description']).to include('Rails')
+    end
+
+    it "combines search with filters" do
+      # Properly transition task to completed status
+      task1.update_status!('in_progress')
+      task1.update_status!('completed')
+
+      get :search, params: { q: 'Ruby', status: 'completed' }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].length).to eq(1)
+      expect(json_response['filters_applied']['status']).to eq('completed')
+    end
+  end
+
+  describe "GET #statistics" do
+    before do
+      create(:task, user_id: 1, status: 'completed', priority: 'high')
+      create(:task, user_id: 1, status: 'pending', priority: 'medium')
+      create(:task, user_id: 1, status: 'in_progress', priority: 'low')
+      create(:task, user_id: 2, status: 'completed') # Other user's task
+    end
+
+    it "returns statistics for current user only" do
+      get :statistics
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      stats = json_response['statistics']
+
+      expect(stats['total_tasks']).to eq(3)
+      expect(stats['completed_tasks']).to eq(1)
+      expect(stats['pending_tasks']).to eq(1)
+      expect(stats['in_progress_tasks']).to eq(1)
+      expect(stats['completion_rate']).to eq(33.33)
+    end
+
+    it "includes priority and status distribution" do
+      get :statistics
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      stats = json_response['statistics']
+
+      expect(stats['priority_distribution']['high']).to eq(1)
+      expect(stats['priority_distribution']['medium']).to eq(1)
+      expect(stats['priority_distribution']['low']).to eq(1)
+    end
+  end
+
+  describe "GET #overdue" do
+    before do
+      create(:task, user_id: 1, due_date: 2.days.ago, status: 'pending')
+      create(:task, user_id: 1, due_date: 1.day.ago, status: 'in_progress')
+      create(:task, user_id: 1, due_date: 1.day.ago, status: 'completed') # Should not appear
+      create(:task, user_id: 1, due_date: 1.day.from_now, status: 'pending') # Not overdue
+    end
+
+    it "returns only overdue tasks that are not completed" do
+      get :overdue
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].length).to eq(2)
+      expect(json_response['tasks'].all? { |task| task['status'] != 'completed' }).to be true
+    end
+
+    it "orders tasks by due_date" do
+      get :overdue
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      dates = json_response['tasks'].map { |task| Date.parse(task['due_date']) }
+      expect(dates).to eq(dates.sort)
+    end
+  end
+
+  describe "GET #upcoming" do
+    before do
+      create(:task, user_id: 1, due_date: Date.current + 1, status: 'pending')
+      create(:task, user_id: 1, due_date: Date.current + 5, status: 'in_progress')
+      create(:task, user_id: 1, due_date: Date.current + 10, status: 'pending') # Beyond default 7 days
+      create(:task, user_id: 1, due_date: Date.current + 2, status: 'completed') # Should not appear
+    end
+
+    it "returns upcoming tasks within 7 days by default" do
+      get :upcoming
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].length).to eq(2)
+      expect(json_response['date_range']['days']).to eq(7)
+    end
+
+    it "respects custom days parameter" do
+      get :upcoming, params: { days: 15 }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].length).to eq(3) # Now includes the 10-day task
+      expect(json_response['date_range']['days']).to eq(15)
+    end
+
+    it "excludes completed tasks" do
+      get :upcoming
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['tasks'].all? { |task| task['status'] != 'completed' }).to be true
+    end
+  end
+
+  describe "PATCH #bulk_update" do
+    let!(:tasks) { create_list(:task, 3, user_id: 1, status: 'pending', priority: 'low') }
+    let(:task_ids) { tasks.map(&:id) }
+
+    it "updates multiple tasks successfully" do
+      patch :bulk_update, params: {
+        task_ids: task_ids,
+        updates: { priority: 'high', description: 'Updated description' }
+      }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['success_count']).to eq(3)
+      expect(json_response['failure_count']).to eq(0)
+
+      tasks.each(&:reload)
+      expect(tasks.all? { |task| task.priority == 'high' }).to be true
+    end
+
+    it "handles status changes with validation" do
+      patch :bulk_update, params: {
+        task_ids: task_ids,
+        updates: { status: 'in_progress' }
+      }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['success_count']).to eq(3)
+
+      tasks.each(&:reload)
+      expect(tasks.all? { |task| task.status == 'in_progress' }).to be true
+    end
+
+    it "returns error for invalid task_ids" do
+      patch :bulk_update, params: {
+        task_ids: [ 99999 ],
+        updates: { priority: 'high' }
+      }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns error without required parameters" do
+      patch :bulk_update, params: { task_ids: task_ids }
+
+      expect(response).to have_http_status(:bad_request)
     end
   end
 end

@@ -5,7 +5,7 @@ class FileAttachment < ApplicationRecord
   validates :original_filename, presence: true, length: { maximum: 255 }
   validates :file_url, presence: true, length: { maximum: 500 }
   validates :content_type, presence: true, length: { maximum: 100 }
-  validates :file_size, presence: true, numericality: { greater_than: 0 }
+  validates :file_size, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :attachable_type, presence: true
   validates :attachable_id, presence: true
 
@@ -20,6 +20,81 @@ class FileAttachment < ApplicationRecord
   scope :completed, -> { where(upload_status: "completed") }
   scope :pending, -> { where(upload_status: "pending") }
   scope :failed, -> { where(upload_status: "failed") }
+  scope :by_user, ->(user_id) { where(attachable_type: 'User', attachable_id: user_id) }
+
+  # Class method for statistics
+  def self.statistics_for_user(user_id)
+    user_files = by_user(user_id)
+
+    total_count = user_files.count
+    total_size = user_files.sum(:file_size)
+    completed_count = user_files.completed.count
+    pending_count = user_files.pending.count
+    failed_count = user_files.failed.count
+
+    # Content type distribution
+    content_type_stats = user_files.group(:content_type).count
+
+    # Category distribution
+    category_stats = user_files.joins(:file_category)
+                               .group('file_categories.name')
+                               .count
+
+    # File size distribution
+    images = user_files.where("content_type LIKE 'image/%'")
+    documents = user_files.where("content_type LIKE 'application/%' OR content_type LIKE 'text/%'")
+    videos = user_files.where("content_type LIKE 'video/%'")
+    audios = user_files.where("content_type LIKE 'audio/%'")
+
+    {
+      total_files: total_count,
+      total_size_bytes: total_size,
+      total_size_human: human_readable_bytes(total_size),
+      completed_files: completed_count,
+      pending_files: pending_count,
+      failed_files: failed_count,
+      upload_success_rate: total_count > 0 ? (completed_count.to_f / total_count * 100).round(2) : 0,
+      content_type_distribution: content_type_stats,
+      category_distribution: category_stats,
+      file_type_summary: {
+        images: {
+          count: images.count,
+          total_size: images.sum(:file_size),
+          size_human: human_readable_bytes(images.sum(:file_size))
+        },
+        documents: {
+          count: documents.count,
+          total_size: documents.sum(:file_size),
+          size_human: human_readable_bytes(documents.sum(:file_size))
+        },
+        videos: {
+          count: videos.count,
+          total_size: videos.sum(:file_size),
+          size_human: human_readable_bytes(videos.sum(:file_size))
+        },
+        audios: {
+          count: audios.count,
+          total_size: audios.sum(:file_size),
+          size_human: human_readable_bytes(audios.sum(:file_size))
+        }
+      }
+    }
+  end
+
+  def self.human_readable_bytes(bytes)
+    return "0 bytes" if bytes == 0
+
+    case bytes
+    when 0..1023
+      "#{bytes} bytes"
+    when 1024..1048575
+      "#{(bytes / 1024.0).round(1)} KB"
+    when 1048576..1073741823
+      "#{(bytes / 1048576.0).round(1)} MB"
+    else
+      "#{(bytes / 1073741824.0).round(1)} GB"
+    end
+  end
 
   # 파일 크기 제한 (10MB)
   MAX_FILE_SIZE = 10.megabytes

@@ -9,8 +9,16 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :tasks do
+        collection do
+          get :search
+          get :statistics
+          get :overdue
+          get :upcoming
+          patch :bulk_update
+        end
         member do
           patch :update_status, path: 'status'
+          patch :complete
         end
       end
     end

@@ -7,23 +7,23 @@ Rails.application.routes.draw do
 
   # Frontend Routes
   root "dashboard#index"
-  
+
   # Authentication routes
   get "auth/login", to: "auth#login"
   post "auth/login", to: "auth#create"
   get "auth/register", to: "auth#register"
   post "auth/register", to: "auth#register_create"
   delete "auth/logout", to: "auth#logout"
-  
+
   # Dashboard
   get "dashboard", to: "dashboard#index"
-  
+
   # Tasks
   resources :tasks
-  
+
   # Analytics
   get "analytics", to: "analytics#index"
-  
+
   # Files
   get "files", to: "files#index"
 

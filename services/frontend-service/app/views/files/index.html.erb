@@ -18,6 +18,7 @@
     </div>
   </div>
 
+
   <!-- URL Form Area -->
   <div id="url-form" class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6 hidden">
     <div class="border-2 border-dashed border-blue-300 rounded-lg p-8">
@@ -30,38 +31,34 @@
           <p class="text-sm text-gray-500 mt-2">Enter the URL of a file you want to reference</p>
         </div>
         
-        <form id="url-file-form" class="mt-6 max-w-lg mx-auto">
+        <%= form_with url: "/files/add_url", method: :post, local: true, id: "url-file-form", class: "mt-6 max-w-lg mx-auto" do |form| %>
           <div class="space-y-4">
             <div>
-              <label for="file_url" class="block text-sm font-medium text-gray-700 text-left">File URL</label>
-              <input type="url" id="file_url" name="file_url" required
-                     class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                     placeholder="https://example.com/document.pdf">
+              <%= form.label :file_url, "File URL", class: "block text-sm font-medium text-gray-700 text-left" %>
+              <%= form.url_field :file_url, required: true,
+                     class: "mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+                     placeholder: "https://example.com/document.pdf" %>
             </div>
             
             <div>
-              <label for="filename" class="block text-sm font-medium text-gray-700 text-left">Display Name</label>
-              <input type="text" id="filename" name="filename" required
-                     class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                     placeholder="My Document.pdf">
+              <%= form.label :filename, "Display Name", class: "block text-sm font-medium text-gray-700 text-left" %>
+              <%= form.text_field :filename, required: true,
+                     class: "mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+                     placeholder: "My Document.pdf" %>
             </div>
             
             <div>
-              <label for="category_id" class="block text-sm font-medium text-gray-700 text-left">Category</label>
-              <select id="category_id" name="category_id"
-                      class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Select Category</option>
-                <% if @categories && @categories.any? %>
-                  <% @categories.each do |category| %>
-                    <option value="<%= category['id'] %>"><%= category['name'] %></option>
-                  <% end %>
-                <% else %>
-                  <option value="1">Documents</option>
-                  <option value="2">Images</option>
-                  <option value="3">Archives</option>
-                  <option value="4">Others</option>
-                <% end %>
-              </select>
+              <%= form.label :category_id, "Category", class: "block text-sm font-medium text-gray-700 text-left" %>
+              <%= form.select :category_id,
+                      options_for_select([
+                        ["Select Category", ""],
+                        ["Documents", "1"],
+                        ["Images", "2"],
+                        ["Archives", "3"],
+                        ["Others", "4"]
+                      ]),
+                      {},
+                      { class: "mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" } %>
             </div>
             
             <div class="flex space-x-3">
@@ -75,63 +72,57 @@
               </button>
             </div>
           </div>
-        </form>
+        <% end %>
       </div>
     </div>
   </div>
 
   <!-- File Filters -->
   <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <!-- Search -->
-      <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Search Files</label>
-        <div class="relative">
-          <input type="text" 
-                 placeholder="Search by filename..."
-                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
+    <%= form_with url: files_path, method: :get, local: true do |form| %>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <!-- Search -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Search Files</label>
+          <div class="relative">
+            <%= form.text_field :search, 
+                value: params[:search],
+                placeholder: "Search by filename...",
+                class: "w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+            <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
         </div>
+
+        <!-- Category Filter -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <%= form.select :category_id, 
+              options_for_select([
+                ['All Categories', '']
+              ] + (@categories&.map { |category| [category['name'], category['id']] } || [
+                ['Documents', '1'],
+                ['Images', '2'],
+                ['Archives', '3'],
+                ['Others', '4']
+              ]), params[:category_id]),
+              {},
+              { class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" } %>
+        </div>
+
       </div>
 
-      <!-- Category Filter -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">All Categories</option>
-          <% if @categories %>
-            <% @categories.each do |category| %>
-              <option value="<%= category['id'] %>"><%= category['name'] %></option>
-            <% end %>
-          <% else %>
-            <option value="documents">Documents</option>
-            <option value="images">Images</option>
-            <option value="archives">Archives</option>
-            <option value="others">Others</option>
-          <% end %>
-        </select>
+      <!-- Filter buttons -->
+      <div class="flex justify-center gap-3">
+        <%= form.submit "Apply Filters", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm" %>
+        <%= link_to "Clear Filters", files_path, class: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-6 rounded-lg transition-colors" %>
       </div>
-
-      <!-- File Type Filter -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">File Type</label>
-        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">All Files</option>
-          <option value="pdf">PDF</option>
-          <option value="doc">Word Documents</option>
-          <option value="xls">Excel Files</option>
-          <option value="ppt">PowerPoint</option>
-          <option value="img">Images</option>
-          <option value="zip">Archives</option>
-        </select>
-      </div>
-    </div>
+    <% end %>
   </div>
 
   <!-- File Statistics -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
       <div class="flex items-center">
         <div class="bg-blue-100 p-3 rounded-full">
@@ -141,21 +132,7 @@
         </div>
         <div class="ml-4">
           <p class="text-sm font-medium text-gray-600">Total Files</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @file_stats&.dig('total_files') || 24 %></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-      <div class="flex items-center">
-        <div class="bg-green-100 p-3 rounded-full">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Storage Used</p>
-          <p class="text-2xl font-bold text-gray-900">2.4GB</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @files&.count || 0 %></p>
         </div>
       </div>
     </div>
@@ -169,21 +146,8 @@
         </div>
         <div class="ml-4">
           <p class="text-sm font-medium text-gray-600">This Month</p>
-          <p class="text-2xl font-bold text-gray-900">12</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-      <div class="flex items-center">
-        <div class="bg-purple-100 p-3 rounded-full">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Shared Files</p>
-          <p class="text-2xl font-bold text-gray-900">8</p>
+          <% current_month_files = @files&.select { |file| file['created_at'] && Date.parse(file['created_at']).month == Date.current.month && Date.parse(file['created_at']).year == Date.current.year }&.count || 0 %>
+          <p class="text-2xl font-bold text-gray-900"><%= current_month_files %></p>
         </div>
       </div>
     </div>
@@ -198,7 +162,6 @@
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
               <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -210,7 +173,7 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 mr-3">
-                      <% file_extension = file['filename']&.split('.')&.last&.downcase %>
+                      <% file_extension = (file['original_filename'] || file['filename'])&.split('.')&.last&.downcase %>
                       <% case file_extension %>
                       <% when 'pdf' %>
                         <div class="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
@@ -245,10 +208,13 @@
                       <% end %>
                     </div>
                     <div>
-                      <div class="text-sm font-medium text-gray-900"><%= file['filename'] %></div>
-                      <% if file['description'] %>
-                        <div class="text-sm text-gray-500"><%= file['description'] %></div>
-                      <% end %>
+                      <div class="text-sm font-medium text-gray-900">
+                        <% if file['file_url'] %>
+                          <%= link_to (file['original_filename'] || file['filename']), file['file_url'], target: '_blank', class: "text-blue-600 hover:text-blue-900 hover:underline" %>
+                        <% else %>
+                          <%= file['original_filename'] || file['filename'] %>
+                        <% end %>
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -258,22 +224,14 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500">
-                  <% if file['file_size'] %>
-                    <% size_mb = file['file_size'].to_f / (1024 * 1024) %>
-                    <% if size_mb >= 1 %>
-                      <%= sprintf('%.1f', size_mb) %> MB
-                    <% else %>
-                      <%= sprintf('%.0f', file['file_size'].to_f / 1024) %> KB
-                    <% end %>
-                  <% else %>
-                    -
-                  <% end %>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-500">
                   <%= file['created_at'] ? Date.parse(file['created_at']).strftime('%Y-%m-%d') : '-' %>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500">
-                  <% if file['category_id'] && @categories %>
+                  <% if file['file_category'] && file['file_category']['name'] %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <%= file['file_category']['name'] %>
+                    </span>
+                  <% elsif file['category_id'] && @categories %>
                     <% category = @categories.find { |c| c['id'] == file['category_id'] } %>
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                       <%= category ? category['name'] : 'Unassigned' %>
@@ -283,23 +241,11 @@
                   <% end %>
                 </td>
                 <td class="px-6 py-4 text-right text-sm font-medium">
-                  <div class="flex justify-end space-x-2">
-                    <%= link_to download_file_path(file['id']), class: "text-blue-600 hover:text-blue-900" do %>
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m-4-6V4"></path>
-                      </svg>
-                    <% end %>
-                    <button class="text-gray-600 hover:text-gray-900" onclick="shareFile('<%= file['id'] %>')">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-                      </svg>
-                    </button>
-                    <%= link_to "/files/#{file['id']}", method: :delete, data: { confirm: 'Are you sure you want to delete this file?' }, class: "text-red-600 hover:text-red-900" do %>
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    <% end %>
-                  </div>
+                  <%= button_to "/files/#{file['id']}", method: :delete, data: { confirm: 'Are you sure you want to delete this file?', turbo: true }, class: "text-red-600 hover:text-red-900 bg-transparent border-0 p-0 cursor-pointer" do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  <% end %>
                 </td>
               </tr>
             <% end %>
@@ -332,6 +278,7 @@
   // URL Form handling
   function toggleUrlForm() {
     const urlForm = document.getElementById('url-form');
+    
     if (urlForm.classList.contains('hidden')) {
       urlForm.classList.remove('hidden');
       // Clear form
@@ -343,12 +290,9 @@
     }
   }
 
-  // Handle URL form submission
+  // Handle form submissions
   document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('url-file-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      addUrlFile();
-    });
+    // URL form submission is now handled by Rails form_with
 
     // Auto-fill filename from URL
     document.getElementById('file_url').addEventListener('blur', function(e) {
@@ -370,42 +314,6 @@
     });
   });
 
-  // Add URL file
-  async function addUrlFile() {
-    const form = document.getElementById('url-file-form');
-    const formData = new FormData(form);
-    
-    const fileData = {
-      file_url: formData.get('file_url'),
-      filename: formData.get('filename'),
-      category_id: formData.get('category_id'),
-      content_type: getContentTypeFromUrl(formData.get('file_url'))
-    };
-
-    try {
-      const response = await fetch('/files/add_url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify(fileData)
-      });
-
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        showSuccess('File URL added successfully!');
-        toggleUrlForm(); // Hide form
-        setTimeout(() => location.reload(), 1000); // Refresh page
-      } else {
-        showError(result.message || 'Failed to add file URL');
-      }
-    } catch (error) {
-      console.error('URL add error:', error);
-      showError('Network error occurred');
-    }
-  }
 
   // Get content type from URL extension
   function getContentTypeFromUrl(url) {

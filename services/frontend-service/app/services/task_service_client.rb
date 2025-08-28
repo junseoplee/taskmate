@@ -88,13 +88,15 @@ class TaskServiceClient < BaseServiceClient
 
   # Search tasks
   def search_tasks(user_id, query, options = {})
+    session_token = options.delete(:session_token)
     search_params = options.merge(q: query, user_id: user_id)
     query_params = build_query_params(search_params)
 
+    headers = { "X-User-ID" => user_id.to_s }
+    headers["Authorization"] = "Bearer #{session_token}" if session_token
+
     make_request(:get, "#{@base_url}/api/v1/tasks/search?#{query_params}", {
-      headers: {
-        "X-User-ID" => user_id.to_s
-      }
+      headers: headers
     })
   end
 
@@ -146,20 +148,24 @@ class TaskServiceClient < BaseServiceClient
 
   # Get overdue tasks
   def get_overdue_tasks(user_id, options = {})
+    session_token = options.delete(:session_token)
+    headers = { "X-User-ID" => user_id.to_s }
+    headers["Authorization"] = "Bearer #{session_token}" if session_token
+
     make_request(:get, "#{@base_url}/api/v1/tasks/overdue?#{build_query_params(options.merge(user_id: user_id))}", {
-      headers: {
-        "X-User-ID" => user_id.to_s
-      }
+      headers: headers
     })
   end
 
   # Get upcoming tasks
   def get_upcoming_tasks(user_id, days = 7, options = {})
+    session_token = options.delete(:session_token)
     params = options.merge(user_id: user_id, days: days)
+    headers = { "X-User-ID" => user_id.to_s }
+    headers["Authorization"] = "Bearer #{session_token}" if session_token
+
     make_request(:get, "#{@base_url}/api/v1/tasks/upcoming?#{build_query_params(params)}", {
-      headers: {
-        "X-User-ID" => user_id.to_s
-      }
+      headers: headers
     })
   end
 

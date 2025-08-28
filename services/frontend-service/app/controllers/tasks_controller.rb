@@ -4,7 +4,29 @@ class TasksController < ApplicationController
     Rails.logger.info "Session[:session_token]: #{session[:session_token] || 'NONE'}"
     Rails.logger.info "Current user: #{current_user.inspect}"
 
-    @tasks_data = fetch_tasks_data
+    # Check if this is a search request
+    @search_query = params[:q] || ""
+
+    if @search_query.present?
+      # If search query is present, use search functionality
+      task_client = TaskServiceClient.new
+      @search_results = task_client.search_tasks(
+        current_user["id"],
+        @search_query,
+        filter_params.merge(session_token: session[:session_token])
+      )
+
+      @tasks_data = {
+        tasks: @search_results["tasks"] || [],
+        pagination: {},
+        filters: filter_params,
+        total: @search_results["total"] || 0,
+        search_query: @search_query
+      }
+    else
+      # Regular fetch for all tasks
+      @tasks_data = fetch_tasks_data
+    end
 
     Rails.logger.info "Tasks data result: #{@tasks_data.inspect}"
     Rails.logger.info "Tasks count: #{@tasks_data[:tasks]&.count || 0}"
@@ -78,14 +100,29 @@ class TasksController < ApplicationController
 
   def update
     task_client = TaskServiceClient.new
-    result = task_client.update_task(params[:id], task_params, session_token: session[:session_token])
 
-    if result["success"]
-      redirect_to task_path(params[:id]), notice: "Task updated successfully!"
+    # If only status is being updated, use the status-specific endpoint
+    if task_params.keys == [ "status" ]
+      result = task_client.update_task_status(params[:id], task_params["status"], session_token: session[:session_token])
+
+      # Task Service returns { task: ... } on success, { error: ... } or { errors: ... } on failure
+      if result["task"]
+        redirect_to tasks_path, notice: "Task status updated successfully!"
+      else
+        error_message = result["error"] || result["errors"]&.join(", ") || result["message"] || "Failed to update task status."
+        redirect_to tasks_path, alert: error_message
+      end
     else
-      flash.now[:alert] = result["message"] || "Failed to update task."
-      @task = fetch_task(params[:id])
-      render :edit, status: :unprocessable_entity
+      # For full task updates (from edit form)
+      result = task_client.update_task(params[:id], task_params, session_token: session[:session_token])
+
+      if result["success"]
+        redirect_to task_path(params[:id]), notice: "Task updated successfully!"
+      else
+        flash.now[:alert] = result["message"] || "Failed to update task."
+        @task = fetch_task(params[:id])
+        render :edit, status: :unprocessable_entity
+      end
     end
   end
 
@@ -115,6 +152,109 @@ class TasksController < ApplicationController
     else
       redirect_to tasks_path, alert: result["message"] || "Failed to delete task."
     end
+  end
+
+  def search
+    @search_query = params[:q] || ""
+
+    if @search_query.present?
+      task_client = TaskServiceClient.new
+      @search_results = task_client.search_tasks(
+        current_user["id"],
+        @search_query,
+        filter_params.merge(session_token: session[:session_token])
+      )
+
+      @tasks = @search_results["tasks"] || []
+      @total = @search_results["total"] || 0
+      @filters_applied = @search_results["filters_applied"] || {}
+    else
+      @tasks = []
+      @total = 0
+      @filters_applied = {}
+    end
+  end
+
+  def statistics
+    task_client = TaskServiceClient.new
+    @stats_data = task_client.get_task_statistics(current_user["id"])
+    @statistics = @stats_data["statistics"] || {}
+  rescue => e
+    Rails.logger.error "Statistics fetch error: #{e.message}"
+    @statistics = {}
+    flash.now[:alert] = "Unable to load statistics."
+  end
+
+  def overdue
+    task_client = TaskServiceClient.new
+    @overdue_data = task_client.get_overdue_tasks(
+      current_user["id"],
+      session_token: session[:session_token]
+    )
+
+    @tasks = @overdue_data["tasks"] || []
+    @total = @overdue_data["total"] || 0
+    @current_date = @overdue_data["current_date"]
+  rescue => e
+    Rails.logger.error "Overdue tasks fetch error: #{e.message}"
+    @tasks = []
+    flash.now[:alert] = "Unable to load overdue tasks."
+  end
+
+  def upcoming
+    days = params[:days]&.to_i || 7
+    task_client = TaskServiceClient.new
+
+    @upcoming_data = task_client.get_upcoming_tasks(
+      current_user["id"],
+      days,
+      session_token: session[:session_token]
+    )
+
+    @tasks = @upcoming_data["tasks"] || []
+    @total = @upcoming_data["total"] || 0
+    @date_range = @upcoming_data["date_range"] || {}
+  rescue => e
+    Rails.logger.error "Upcoming tasks fetch error: #{e.message}"
+    @tasks = []
+    flash.now[:alert] = "Unable to load upcoming tasks."
+  end
+
+  def bulk_update
+    task_ids = params[:task_ids] || []
+    updates = params[:updates] || {}
+
+    if task_ids.empty? || updates.empty?
+      return redirect_to tasks_path, alert: "Please select tasks and updates to apply."
+    end
+
+    task_client = TaskServiceClient.new
+    result = task_client.bulk_update_tasks(task_ids, updates)
+
+    if result["success_count"] && result["success_count"] > 0
+      message = "Successfully updated #{result['success_count']} task(s)."
+      message += " #{result['failure_count']} failed." if result["failure_count"] > 0
+      redirect_to tasks_path, notice: message
+    else
+      redirect_to tasks_path, alert: "Failed to update tasks."
+    end
+  rescue => e
+    Rails.logger.error "Bulk update error: #{e.message}"
+    redirect_to tasks_path, alert: "Failed to update tasks."
+  end
+
+  def complete
+    task_client = TaskServiceClient.new
+    result = task_client.complete_task(params[:id], session_token: session[:session_token])
+
+    if result["task"] && result["task"]["status"] == "completed"
+      redirect_to tasks_path, notice: "Task marked as completed!"
+    else
+      redirect_to tasks_path, alert: result["message"] || "Failed to complete task."
+    end
+  rescue => e
+    Rails.logger.error "Task completion error: #{e.message}"
+    redirect_to tasks_path, alert: "Failed to complete task."
   end
 
   private
@@ -172,7 +312,11 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.permit(:title, :description, :status, :priority, :due_date, :tags)
+    if params[:task]
+      params.require(:task).permit(:title, :description, :status, :priority, :due_date, :tags)
+    else
+      params.permit(:title, :description, :status, :priority, :due_date, :tags)
+    end
   end
 
   def filter_params

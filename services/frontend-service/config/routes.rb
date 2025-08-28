@@ -20,7 +20,18 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
 
   # Tasks
-  resources :tasks
+  resources :tasks do
+    collection do
+      get :search
+      get :statistics
+      get :overdue
+      get :upcoming
+      patch :bulk_update
+    end
+    member do
+      patch :complete
+    end
+  end
 
   # Analytics
   get "analytics", to: "analytics#index"

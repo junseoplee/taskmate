@@ -22,6 +22,45 @@ class Task < ApplicationRecord
   scope :by_user, ->(user_id) { where(user_id: user_id) }
   scope :due_soon, -> { where("due_date <= ?", 3.days.from_now).where("due_date >= ?", Date.current) }
   scope :overdue, -> { where("due_date < ?", Date.current) }
+  scope :search_text, ->(query) {
+    where("title ILIKE ? OR description ILIKE ?", "%#{query}%", "%#{query}%")
+  }
+
+  # Class methods for statistics
+  def self.statistics_for_user(user_id)
+    user_tasks = by_user(user_id)
+
+    total_count = user_tasks.count
+    completed_count = user_tasks.by_status('completed').count
+    pending_count = user_tasks.by_status('pending').count
+    in_progress_count = user_tasks.by_status('in_progress').count
+    cancelled_count = user_tasks.by_status('cancelled').count
+    overdue_count = user_tasks.overdue.where.not(status: 'completed').count
+
+    completion_rate = total_count > 0 ? (completed_count.to_f / total_count * 100).round(2) : 0
+
+    {
+      total_tasks: total_count,
+      completed_tasks: completed_count,
+      pending_tasks: pending_count,
+      in_progress_tasks: in_progress_count,
+      cancelled_tasks: cancelled_count,
+      overdue_tasks: overdue_count,
+      completion_rate: completion_rate,
+      priority_distribution: {
+        urgent: user_tasks.by_priority('urgent').count,
+        high: user_tasks.by_priority('high').count,
+        medium: user_tasks.by_priority('medium').count,
+        low: user_tasks.by_priority('low').count
+      },
+      status_distribution: {
+        pending: pending_count,
+        in_progress: in_progress_count,
+        completed: completed_count,
+        cancelled: cancelled_count
+      }
+    }
+  end
 
   # Instance methods
   def overdue?

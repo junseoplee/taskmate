@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_26_170734) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_28_042228) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,12 +26,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_170734) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "file_url", null: false
-    t.index ["attachable_type", "attachable_id"], name: "index_file_attachments_on_attachable"
-    t.index ["attachable_type", "attachable_id"], name: "index_file_attachments_on_attachable_type_and_attachable_id"
-    t.index ["content_type"], name: "index_file_attachments_on_content_type"
-    t.index ["file_category_id"], name: "index_file_attachments_on_file_category_id"
-    t.index ["storage_filename"], name: "index_file_attachments_on_storage_filename", unique: true
-    t.index ["upload_status"], name: "index_file_attachments_on_upload_status"
+    t.index [ "attachable_type", "attachable_id" ], name: "index_file_attachments_on_attachable"
+    t.index [ "attachable_type", "attachable_id" ], name: "index_file_attachments_on_attachable_type_and_attachable_id"
+    t.index [ "content_type" ], name: "index_file_attachments_on_content_type"
+    t.index [ "file_category_id" ], name: "index_file_attachments_on_file_category_id"
+    t.index [ "storage_filename" ], name: "index_file_attachments_on_storage_filename", unique: true
+    t.index [ "upload_status" ], name: "index_file_attachments_on_upload_status"
   end
 
   create_table "file_categories", force: :cascade do |t|
@@ -41,7 +41,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_170734) do
     t.bigint "max_file_size"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_file_categories_on_name", unique: true
+    t.index [ "name" ], name: "index_file_categories_on_name", unique: true
+  end
+
+  create_table "simple_files", force: :cascade do |t|
+    t.string "filename", limit: 255, null: false
+    t.string "file_url", limit: 500, null: false
+    t.string "file_type", limit: 50
+    t.integer "user_id", null: false
+    t.integer "file_category_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "created_at" ], name: "index_simple_files_on_created_at"
+    t.index [ "file_category_id" ], name: "index_simple_files_on_file_category_id"
+    t.index [ "file_type" ], name: "index_simple_files_on_file_type"
+    t.index [ "user_id" ], name: "index_simple_files_on_user_id"
   end
 
   add_foreign_key "file_attachments", "file_categories"

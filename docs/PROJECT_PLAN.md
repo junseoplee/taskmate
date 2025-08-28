@@ -49,9 +49,10 @@
 
 ### 4. File Service (포트 3003)
 - **데이터베이스**: file_service_db
-- 파일 첨부/다운로드 관리
+- Simple Files API (URL 기반 파일 관리)
 - 파일 카테고리 및 권한 관리
 - 파일 메타데이터 관리
+- 파일 통계 및 대시보드 지원
 
 ### 5. Frontend Service (포트 3100)
 - API Gateway 패턴으로 백엔드 서비스 통합
@@ -361,11 +362,11 @@ rails new . --api --database=postgresql --skip-test
 - ✅ 파일 업로드/다운로드 API 안정성 확인
 - ✅ 서비스 간 통신 및 인증 연동 완료
 
-### Phase 4: Frontend UI/UX 개발
-**예상 소요시간**: 5-7일  
+### ✅ Phase 4: Frontend UI/UX 개발 - 완료 (2025-08-28)
+**실제 소요시간**: 5일  
 **우선순위**: HIGH  
-**의존성**: Phase 2-3 완료
-**현재 진행도**: 🔄 **95% 거의 완료** (UI 완성, 인증 이슈 수정 필요)
+**의존성**: Phase 2-3 완료 ✅
+**완료 상태**: ✅ **100% 완료** (UI 완성, 모든 기능 정상 동작)
 
 Frontend Service를 통한 API Gateway 패턴 구현으로 마이크로서비스 기능 통합
 
@@ -425,24 +426,25 @@ Frontend Service를 통한 API Gateway 패턴 구현으로 마이크로서비스
 - ✅ `POST /api/v1/analytics/events` - 이벤트 수신 (내부 API)
 - ✅ `GET /api/v1/health` - Analytics Service 상태 확인
 
-**⚠️ 남은 이슈 (긴급 수정 필요):**
+**✅ 모든 이슈 해결 완료:**
 
-- [ ] **Session Token 인증 이슈 수정** (최우선)
-  - ⚠️ 태스크 생성 시 "Access denied" 오류 발생
-  - 🔍 원인: TasksController#create에서 session_token 미전달
-  - 🛠️ 해결방안: create action에 `session_token: session[:session_token]` 추가
-  - 📍 위치: `services/frontend-service/app/controllers/tasks_controller.rb:create`
+- ✅ **Session Token 인증 이슈 해결** (2025-08-27 완료)
+  - ✅ 태스크 생성/수정/삭제 시 session_token 전달 구현
+  - ✅ TasksController, FilesController의 모든 액션에 토큰 전달
+  - ✅ 파일 삭제 API 경로 수정 (delete_simple_file 메서드 사용)
+  - ✅ Analytics Time Period 레이아웃 개선 (중앙 정렬, 간격 조정)
 
-**📋 통합 및 최종 테스트:**
+**✅ 통합 테스트 완료:**
 
-- [ ] **Frontend ↔ Backend 인증 통합 테스트** (우선순위 1) ← **다음 단계**
-  - [ ] 세션 토큰 전달 검증
-  - [ ] 태스크 CRUD 작업 전체 워크플로우 테스트
-  - [ ] 로그아웃 후 리다이렉트 테스트
+- ✅ **Frontend ↔ Backend 인증 통합 완료**
+  - ✅ 세션 토큰 전달 검증 완료
+  - ✅ 태스크 CRUD 작업 전체 워크플로우 정상 동작
+  - ✅ 파일 업로드/삭제 기능 정상 동작
+  - ✅ Analytics 대시보드 및 Time Period 기능 완료
   
-- [ ] **전체 서비스 통합 검증** (우선순위 2)
-  - [ ] Docker Compose 전체 서비스 통합 테스트
-  - [ ] 사용자 워크플로우 E2E 테스트 (회원가입→로그인→태스크 관리→로그아웃)
+- ✅ **전체 서비스 통합 검증 완료**
+  - ✅ Docker Compose 전체 서비스 정상 동작
+  - ✅ 사용자 워크플로우 E2E 정상 동작
 
 **기술 스택**:
 - Rails Views (ERB) + Turbo + Stimulus
@@ -687,8 +689,7 @@ kubectl port-forward -n taskmate-dev svc/frontend-service 3100:3100
 **Phase 2**: ✅ 완료 3일 (핵심 서비스) - 예상 8-10일 → 실제 3일  
 **Phase 2.5**: ✅ 완료 1일 (Docker & K8s) - 추가 구현  
 **Phase 3**: ✅ 완료 3일 (확장 서비스) - 예상 6-8일 → 실제 3일 (고급 기능 포함)  
-**Phase 4**: ✅ **100% 완료** (Frontend UI 완성, 인증 플로우 수정 완료)  
-**Phase 4.5**: 🚨 **미구현 API 7개 구현 필요** ← **다음 단계**  
+**Phase 4**: ✅ **100% 완료** (Frontend UI 완성, 모든 기능 정상 동작)  
 **Phase 5**: ⚠️ **60% 완료** (NGINX & K8s 로컬 통합) - K8s 기본 설정 완료  
 **Phase 6**: 3-5일 (모니터링)  
 **Phase 7**: 4-6일 (테스트/최적화)  
@@ -707,8 +708,8 @@ kubectl port-forward -n taskmate-dev svc/frontend-service 3100:3100
    - ✅ Analytics Service 고급 구현 (1.5일) - 통계 분석, 이벤트 추적, 30개 테스트
    - ✅ File Service 고급 구현 (1.5일) - URL 기반 시스템, 다형성 첨부, 45개 테스트
 
-### 🎨 Week 3: Frontend UI 개발 - ✅ **95% 거의 완료**
-2. **✅ Phase 4**: Frontend UI/UX 개발 (5-7일) ← **95% 완료 (인증 이슈 수정 필요)**
+### 🎨 Week 3: Frontend UI 개발 - ✅ **100% 완료**
+2. **✅ Phase 4**: Frontend UI/UX 개발 (실제 5일) - **100% 완료**
    - ✅ Frontend Service 컨트롤러 및 Service Client 구현
    - ✅ Rails Views + Tailwind CSS UI 완전 구현
    - ✅ 모든 페이지 UI 및 기능 구현 완료
@@ -872,19 +873,24 @@ Task Service:
 - PATCH  /api/v1/tasks/:id/status (상태 변경)
 
 Analytics Service:
-- GET    /api/v1/health       (헬스체크)
-- ⚠️ [통계 API 구현 필요]
-  - ❌ GET /api/v1/analytics/dashboard
-  - ❌ GET /api/v1/analytics/tasks/completion-rate
-  - ❌ GET /api/v1/analytics/priority-distribution
+- GET    /api/v1/health                          (헬스체크)
+- GET    /api/v1/analytics/dashboard             (대시보드 통계)
+- GET    /api/v1/analytics/tasks/completion-rate (완료율 통계)
+- GET    /api/v1/analytics/completion-trend      (완료 트렌드)
+- GET    /api/v1/analytics/priority-distribution (우선순위 분포)
+- POST   /api/v1/analytics/events                (이벤트 추적)
 
 File Service:
-- GET    /api/v1/file_categories        (카테고리 목록)
-- POST   /api/v1/file_categories        (카테고리 생성)
-- GET    /api/v1/file_attachments       (파일 목록)
-- POST   /api/v1/file_attachments       (파일 업로드)
-- GET    /api/v1/file_attachments/:id   (파일 다운로드)
-- DELETE /api/v1/file_attachments/:id   (파일 삭제)
+- GET    /api/v1/file_categories          (카테고리 목록)
+- POST   /api/v1/file_categories          (카테고리 생성)
+- GET    /api/v1/simple_files             (Simple Files 목록)
+- POST   /api/v1/simple_files             (Simple File 생성)
+- DELETE /api/v1/simple_files/:id         (Simple File 삭제)
+- GET    /api/v1/simple_files/statistics  (파일 통계)
+- GET    /api/v1/file_attachments         (파일 첨부 목록 - Legacy)
+- POST   /api/v1/file_attachments         (파일 업로드 - Legacy)
+- GET    /api/v1/file_attachments/:id     (파일 다운로드 - Legacy)
+- DELETE /api/v1/file_attachments/:id     (파일 삭제 - Legacy)
 
 Frontend Service:
 - ✅ Rails Views + Tailwind CSS UI 완전 구현 완료
@@ -897,12 +903,17 @@ Frontend Service:
 
 ### 📈 다음 우선순위 (Phase 4+)
 
-**즉시 필요한 작업** (우선순위 순):
-1. **Session Token 인증 이슈 수정** ← **최우선** 🚨
-   - TasksController의 create/update/destroy에 session_token 전달 추가
-   - 상세 가이드: [NEXT_SESSION_TODO.md](NEXT_SESSION_TODO.md) 참조
-2. **전체 통합 테스트** - 5개 서비스 완전 연동 검증
-3. **Phase 5 Kubernetes 통합** - NGINX Ingress 설정 완료
+**다음 작업 계획** (우선순위 순):
+1. **Phase 5 Kubernetes 통합 완료** ← **다음 단계**
+   - NGINX Ingress 설정
+   - Analytics, File, Frontend Service K8s 매니페스트 작성
+   - 로컬 도메인 통합 (taskmate.local)
+2. **Phase 6 모니터링 시스템 구축**
+   - Prometheus + Grafana 스택
+   - ELK Stack 로깅 시스템
+3. **Phase 7 성능 최적화 및 테스트**
+   - E2E 테스트 자동화
+   - 부하 테스트 및 최적화
 
 **환경 준비 완료**:
 - ✅ Docker 템플릿으로 신규 서비스 5분 내 추가 가능

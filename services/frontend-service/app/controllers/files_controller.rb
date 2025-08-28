@@ -1,9 +1,9 @@
 class FilesController < ApplicationController
   def index
-    @files_data = fetch_files_data
+    @files_data = fetch_simple_files_data
     @files = @files_data[:files]
     @categories = fetch_categories
-    @file_stats = fetch_file_stats
+    @file_stats = fetch_simple_file_stats
   end
 
   def categories
@@ -77,7 +77,7 @@ class FilesController < ApplicationController
 
   def destroy
     file_client = FileServiceClient.new
-    result = file_client.delete_file(params[:id], session_token: current_session_token)
+    result = file_client.delete_simple_file(params[:id], session_token: current_session_token)
 
     if result["success"]
       redirect_to files_path, notice: "File deleted successfully!"
@@ -90,19 +90,23 @@ class FilesController < ApplicationController
     file_client = FileServiceClient.new
     session_token = current_session_token
 
+    Rails.logger.info "=== Add URL File Debug ==="
+    Rails.logger.info "Parameters: #{params.inspect}"
+    Rails.logger.info "Session token: #{session_token}"
+
+    # Simple file data - no complex content-type inference
     file_data = {
-      file_attachment: {
-        filename: params[:filename],
-        file_url: params[:file_url],
-        content_type: params[:content_type] || "application/octet-stream",
-        file_size: 0, # URL files don't have size
-        attachable_type: "Task",
-        attachable_id: params[:task_id] || 23, # Default task
-        file_category_id: params[:category_id] || 1
-      }
+      filename: params[:filename],
+      file_url: params[:file_url],
+      user_id: current_user["id"],
+      file_category_id: params[:category_id].present? ? params[:category_id].to_i : 1
     }
 
-    result = file_client.create_file_attachment(file_data[:file_attachment], session_token: session_token)
+    Rails.logger.info "File data to send: #{file_data.inspect}"
+
+    result = file_client.create_simple_file(file_data, session_token: session_token)
+
+    Rails.logger.info "File service result: #{result.inspect}"
 
     if result["data"] || result["success"]
       if request.xhr?
@@ -140,11 +144,11 @@ class FilesController < ApplicationController
 
   private
 
-  def fetch_files_data
+  def fetch_simple_files_data
     file_client = FileServiceClient.new
 
     begin
-      response = file_client.get_user_files(current_user["id"], filter_params, session_token: current_session_token)
+      response = file_client.get_simple_files(current_user["id"], filter_params, session_token: current_session_token)
 
       if response["success"]
         {
@@ -161,7 +165,7 @@ class FilesController < ApplicationController
         }
       end
     rescue => e
-      Rails.logger.error "File data fetch error: #{e.message}"
+      Rails.logger.error "Simple file data fetch error: #{e.message}"
       {
         files: [],
         pagination: {},
@@ -183,18 +187,18 @@ class FilesController < ApplicationController
     end
   end
 
-  def fetch_file_stats
+  def fetch_simple_file_stats
     file_client = FileServiceClient.new
 
     begin
-      response = file_client.get_file_stats(current_user["id"], session_token: current_session_token)
+      response = file_client.get_simple_file_stats(current_user["id"], session_token: current_session_token)
       if response["success"]
         response["data"] || { total_files: 0 }
       else
         { total_files: 0 }
       end
     rescue => e
-      Rails.logger.error "File stats fetch error: #{e.message}"
+      Rails.logger.error "Simple file stats fetch error: #{e.message}"
       { total_files: 0 }
     end
   end

@@ -1,7 +1,48 @@
 # See https://git-scm.com/docs/gitattributes for more about git attribute files.
 
-# Mark the database schema as having been generated.
-db/schema.rb linguist-generated
+# GitHub 언어 통계 최적화
+# ERB 템플릿을 Ruby로 인식 (HTML 대신)
+*.html.erb linguist-language=Ruby
+
+# 자동 생성된 파일들 제외 (테스트 커버리지 리포트)
+coverage/* linguist-generated=true
+*/coverage/* linguist-generated=true
+
+# 자동 생성된 스키마 파일들 제외
+db/schema.rb linguist-generated=true
+*/db/schema.rb linguist-generated=true
+db/cache_schema.rb linguist-generated=true
+*/db/cache_schema.rb linguist-generated=true
+db/cable_schema.rb linguist-generated=true
+*/db/cable_schema.rb linguist-generated=true
+
+# Node modules와 의존성 제외
+node_modules/* linguist-vendored=true
+*/node_modules/* linguist-vendored=true
+
+# 로그 파일들 제외
+*.log linguist-generated=true
+log/* linguist-generated=true
+*/log/* linguist-generated=true
+tmp/* linguist-generated=true
+*/tmp/* linguist-generated=true
+
+# 테스트 관련 파일들 제외
+spec/examples.txt linguist-generated=true
+*/spec/examples.txt linguist-generated=true
+
+# RSpec 커버리지 설정 파일들 제외
+.last_run.json linguist-generated=true
+.resultset.json linguist-generated=true
+*/.last_run.json linguist-generated=true
+*/.resultset.json linguist-generated=true
+
+# PID 파일들 제외
+*.pid linguist-generated=true
+*/tmp/pids/* linguist-generated=true
+
+# 쿠키 파일들 제외
+*cookies.txt linguist-generated=true
 
 # Mark any vendored files as having been vendored.
 vendor/* linguist-vendored

@@ -1,34 +1,28 @@
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: redis-pv
-  namespace: taskmate
-spec:
-  capacity:
-    storage: 500Mi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  hostPath:
-    path: /tmp/redis-data
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: redis-pvc
   namespace: taskmate
+  labels:
+    app: redis
+    tier: cache
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
+      storage: 1Gi
+  storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
   namespace: taskmate
+  labels:
+    app: redis
+    tier: cache
 spec:
   replicas: 1
   selector:
@@ -38,15 +32,33 @@ spec:
     metadata:
       labels:
         app: redis
+        tier: cache
     spec:
       containers:
       - name: redis
         image: redis:7-alpine
         ports:
         - containerPort: 6379
+          name: redis
         volumeMounts:
         - name: redis-storage
           mountPath: /data
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         readinessProbe:
           exec:
             command:
@@ -54,27 +66,39 @@ spec:
             - ping
           initialDelaySeconds: 5
           periodSeconds: 5
-        livenessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 30
-          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
+        command:
+        - redis-server
+        args:
+        - --appendonly
+        - "yes"
+        - --save
+        - "900 1"
+        - --save
+        - "300 10"
+        - --save
+        - "60 10000"
       volumes:
       - name: redis-storage
         persistentVolumeClaim:
           claimName: redis-pvc
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
   namespace: taskmate
-spec:
-  selector:
+  labels:
     app: redis
+    tier: cache
+spec:
+  type: ClusterIP
   ports:
   - port: 6379
     targetPort: 6379
-  type: ClusterIP
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis

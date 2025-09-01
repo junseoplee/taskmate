@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: taskmate
+  labels:
+    name: taskmate
+    environment: development
+    project: taskmate-microservices
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskmate-config
+  namespace: taskmate
+data:
+  RAILS_ENV: "development"
+  DATABASE_HOST: "postgres-service"
+  DATABASE_USER: "taskmate"
+  REDIS_URL: "redis://redis-service:6379"
+  # Service Discovery URLs
+  USER_SERVICE_URL: "http://user-service:3000"
+  TASK_SERVICE_URL: "http://task-service:3001" 
+  ANALYTICS_SERVICE_URL: "http://analytics-service:3002"
+  FILE_SERVICE_URL: "http://file-service:3003"
+  FRONTEND_SERVICE_URL: "http://frontend-service:3100"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: taskmate-secrets
+  namespace: taskmate
+type: Opaque
+stringData:
+  DATABASE_PASSWORD: "password"
+  RAILS_MASTER_KEY: "dummy_master_key_for_development_only"

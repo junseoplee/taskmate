@@ -46,4 +46,4 @@ USER rails
 EXPOSE 3001
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["rails", "server", "-b", "0.0.0.0", "-p", "3001"]
+CMD ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3001"]

@@ -1,0 +1,137 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: taskmate
+  labels:
+    app: user-service
+    tier: application
+    service: user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+        tier: application
+        service: user
+    spec:
+      containers:
+      - name: user-service
+        image: taskmate/user-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: taskmate-config
+              key: RAILS_ENV
+        - name: DATABASE_URL
+          value: "postgresql://taskmate:password@postgres-service:5432/user_service_db"
+        - name: DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: taskmate-config
+              key: DATABASE_HOST
+        - name: DATABASE_USER
+          valueFrom:
+            configMapKeyRef:
+              name: taskmate-config
+              key: DATABASE_USER
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: taskmate-secrets
+              key: DATABASE_PASSWORD
+        - name: REDIS_URL
+          value: "redis://redis-service:6379/0"
+        - name: RAILS_MASTER_KEY_DUMMY
+          value: "1"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /up
+            port: 3000
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /up
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always
+      initContainers:
+      - name: db-migrate
+        image: taskmate/user-service:latest
+        imagePullPolicy: Never
+        env:
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: taskmate-config
+              key: RAILS_ENV
+        - name: DATABASE_URL
+          value: "postgresql://taskmate:password@postgres-service:5432/user_service_db"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: taskmate-secrets
+              key: DATABASE_PASSWORD
+        command: ["./bin/rails", "db:create", "db:migrate"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: taskmate
+  labels:
+    app: user-service
+    tier: application
+    service: user
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: user-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service-headless
+  namespace: taskmate
+  labels:
+    app: user-service
+    tier: application
+    service: user
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: user-service

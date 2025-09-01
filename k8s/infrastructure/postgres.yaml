@@ -3,33 +3,77 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
-  namespace: taskmate-dev
+  namespace: taskmate
+  labels:
+    app: postgres
+    tier: database
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
+  storageClassName: standard
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: postgres-secret
-  namespace: taskmate-dev
+  namespace: taskmate
+  labels:
+    app: postgres
+    tier: database
 type: Opaque
 stringData:
   POSTGRES_USER: taskmate
   POSTGRES_PASSWORD: password
   POSTGRES_DB: postgres
-  POSTGRES_MULTIPLE_DATABASES: user_service_db,task_service_db,analytics_service_db,file_service_db
+  POSTGRES_MULTIPLE_DATABASES: user_service_db,task_service_db,analytics_service_db,file_service_db,frontend_service_db
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: taskmate
+  labels:
+    app: postgres
+    tier: database
+data:
+  create-multiple-postgresql-databases.sh: |
+    #!/bin/bash
+    set -e
+    set -u
+
+    function create_user_and_database() {
+        local database=$1
+        echo "Creating user and database '$database'"
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+            CREATE USER ${database}_user WITH PASSWORD 'password';
+            CREATE DATABASE $database;
+            GRANT ALL PRIVILEGES ON DATABASE $database TO ${database}_user;
+            GRANT ALL PRIVILEGES ON DATABASE $database TO $POSTGRES_USER;
+            \c $database;
+            GRANT ALL ON SCHEMA public TO ${database}_user;
+            GRANT ALL ON SCHEMA public TO $POSTGRES_USER;
+    EOSQL
+    }
+
+    if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
+        echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
+        for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
+            create_user_and_database $db
+        done
+        echo "Multiple databases created successfully"
+    fi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: taskmate-dev
+  namespace: taskmate
   labels:
     app: postgres
+    tier: database
 spec:
   replicas: 1
   selector:
@@ -39,6 +83,7 @@ spec:
     metadata:
       labels:
         app: postgres
+        tier: database
     spec:
       containers:
       - name: postgres
@@ -66,11 +111,20 @@ spec:
               key: POSTGRES_MULTIPLE_DATABASES
         ports:
         - containerPort: 5432
+          name: postgres
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
+          subPath: postgres
         - name: init-script
           mountPath: /docker-entrypoint-initdb.d
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
         livenessProbe:
           exec:
             command:
@@ -79,6 +133,8 @@ spec:
             - taskmate
           initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         readinessProbe:
           exec:
             command:
@@ -87,6 +143,8 @@ spec:
             - taskmate
           initialDelaySeconds: 5
           periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
@@ -95,49 +153,22 @@ spec:
         configMap:
           name: postgres-init-script
           defaultMode: 0755
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres-service
-  namespace: taskmate-dev
+  namespace: taskmate
   labels:
     app: postgres
+    tier: database
 spec:
+  type: ClusterIP
   ports:
   - port: 5432
     targetPort: 5432
+    protocol: TCP
+    name: postgres
   selector:
     app: postgres
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgres-init-script
-  namespace: taskmate-dev
-data:
-  create-multiple-postgresql-databases.sh: |
-    #!/bin/bash
-
-    set -e
-    set -u
-
-    function create_user_and_database() {
-    	local database=$1
-    	echo "  Creating user and database '$database'"
-    	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    	    CREATE USER ${database}_user WITH PASSWORD 'password';
-    	    CREATE DATABASE $database;
-    	    GRANT ALL PRIVILEGES ON DATABASE $database TO ${database}_user;
-    	    \c $database;
-    	    GRANT ALL ON SCHEMA public TO ${database}_user;
-    EOSQL
-    }
-
-    if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
-    	echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
-    	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
-    		create_user_and_database $db
-    	done
-    	echo "Multiple databases created"
-    fi

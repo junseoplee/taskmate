@@ -1,0 +1,225 @@
+---
+# TaskMate Kubernetes 배포 가이드
+# 
+# 이 파일은 TaskMate 마이크로서비스를 Kubernetes에 배포하는 
+# 전체 과정을 설명합니다.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deployment-guide
+  namespace: taskmate
+data:
+  deployment-order.md: |
+    # TaskMate Kubernetes 배포 순서
+
+    ## 1단계: Minikube 환경 설정
+    ```bash
+    # Minikube 시작
+    minikube start --driver=docker --memory=4096 --cpus=2
+    
+    # Ingress 애드온 활성화
+    minikube addons enable ingress
+    
+    # 상태 확인
+    minikube status
+    kubectl cluster-info
+    ```
+
+    ## 2단계: 네임스페이스 생성
+    ```bash
+    kubectl apply -f k8s/namespace.yaml
+    kubectl get namespace taskmate
+    ```
+
+    ## 3단계: 인프라스트럭처 배포
+    ```bash
+    # PostgreSQL 배포
+    kubectl apply -f k8s/infrastructure/postgres.yaml
+    
+    # Redis 배포  
+    kubectl apply -f k8s/infrastructure/redis.yaml
+    
+    # 상태 확인
+    kubectl get pods -n taskmate
+    kubectl get services -n taskmate
+    ```
+
+    ## 4단계: 마이크로서비스 배포
+    ```bash
+    # 의존성 순서대로 배포
+    kubectl apply -f k8s/services/user-service.yaml
+    kubectl apply -f k8s/services/task-service.yaml
+    kubectl apply -f k8s/services/analytics-service.yaml
+    kubectl apply -f k8s/services/file-service.yaml
+    kubectl apply -f k8s/services/frontend-service.yaml
+    ```
+
+    ## 5단계: Ingress 설정
+    ```bash
+    kubectl apply -f k8s/ingress/taskmate-ingress.yaml
+    
+    # Ingress IP 확인
+    kubectl get ingress -n taskmate
+    ```
+
+    ## 6단계: 호스트 파일 설정
+    ```bash
+    # Minikube IP 확인
+    minikube ip
+    
+    # /etc/hosts 파일에 추가 (예: 192.168.49.2)
+    echo "$(minikube ip) taskmate.local" | sudo tee -a /etc/hosts
+    echo "$(minikube ip) user.taskmate.local" | sudo tee -a /etc/hosts
+    echo "$(minikube ip) task.taskmate.local" | sudo tee -a /etc/hosts  
+    echo "$(minikube ip) analytics.taskmate.local" | sudo tee -a /etc/hosts
+    echo "$(minikube ip) files.taskmate.local" | sudo tee -a /etc/hosts
+    ```
+
+  service-discovery.md: |
+    # TaskMate 서비스 디스커버리 패턴
+
+    ## 내부 서비스 통신
+    Kubernetes 내부에서 서비스는 DNS 기반 서비스 디스커버리를 사용합니다:
+
+    ### DNS 패턴
+    - `user-service.taskmate.svc.cluster.local:3000`
+    - `task-service.taskmate.svc.cluster.local:3001`  
+    - `analytics-service.taskmate.svc.cluster.local:3002`
+    - `file-service.taskmate.svc.cluster.local:3003`
+    - `frontend-service.taskmate.svc.cluster.local:3100`
+
+    ### 환경 변수 패턴
+    ConfigMap을 통해 서비스 URL 관리:
+    - `USER_SERVICE_URL=http://user-service:3000`
+    - `TASK_SERVICE_URL=http://task-service:3001`
+    - `ANALYTICS_SERVICE_URL=http://analytics-service:3002`
+    - `FILE_SERVICE_URL=http://file-service:3003`
+
+    ## 외부 접근
+    ### Ingress 라우팅
+    - `taskmate.local/` → Frontend Service
+    - `taskmate.local/api/v1/auth` → User Service
+    - `taskmate.local/api/v1/tasks` → Task Service
+    - `taskmate.local/api/v1/analytics` → Analytics Service
+    - `taskmate.local/api/v1/files` → File Service
+
+    ### 개발용 직접 접근
+    - `user.taskmate.local` → User Service
+    - `task.taskmate.local` → Task Service
+    - `analytics.taskmate.local` → Analytics Service
+    - `files.taskmate.local` → File Service
+
+    ## 헬스체크 패턴
+    모든 서비스는 `/up` 엔드포인트로 헬스체크를 제공합니다:
+    - Liveness Probe: 45초 후 시작, 10초마다
+    - Readiness Probe: 15초 후 시작, 5초마다
+
+    ## 세션 관리
+    - Redis 기반 세션 스토리지
+    - 각 서비스는 별도 Redis DB 사용 (0-4)
+    - Ingress에서 세션 어피니티 설정
+
+  troubleshooting.md: |
+    # 트러블슈팅 가이드
+
+    ## 일반적인 문제들
+
+    ### 1. Pod이 시작되지 않음
+    ```bash
+    kubectl get pods -n taskmate
+    kubectl describe pod <pod-name> -n taskmate
+    kubectl logs <pod-name> -n taskmate
+    ```
+
+    ### 2. 데이터베이스 연결 실패
+    ```bash
+    # PostgreSQL 상태 확인
+    kubectl exec -it deployment/postgres -n taskmate -- psql -U taskmate -l
+    
+    # 네트워크 연결 테스트
+    kubectl exec -it deployment/user-service -n taskmate -- nc -zv postgres-service 5432
+    ```
+
+    ### 3. 서비스 간 통신 실패
+    ```bash
+    # DNS 해상도 테스트
+    kubectl exec -it deployment/frontend-service -n taskmate -- nslookup user-service
+    
+    # HTTP 연결 테스트
+    kubectl exec -it deployment/frontend-service -n taskmate -- curl -v http://user-service:3000/up
+    ```
+
+    ### 4. Ingress 라우팅 문제
+    ```bash
+    # Ingress 상태 확인
+    kubectl get ingress -n taskmate
+    kubectl describe ingress taskmate-ingress -n taskmate
+    
+    # NGINX Ingress Controller 로그
+    kubectl logs -n ingress-nginx deployment/ingress-nginx-controller
+    ```
+
+    ### 5. 이미지 빌드 및 로드
+    ```bash
+    # 로컬에서 이미지 빌드 후 Minikube로 로드
+    eval $(minikube docker-env)
+    
+    # User Service 이미지 빌드
+    cd services/user-service
+    docker build -t taskmate/user-service:latest .
+    
+    # 다른 서비스들도 동일하게...
+    ```
+
+    ## 모니터링 명령어
+    ```bash
+    # 전체 리소스 상태
+    kubectl get all -n taskmate
+    
+    # 실시간 Pod 상태
+    kubectl get pods -n taskmate -w
+    
+    # 리소스 사용량
+    kubectl top pods -n taskmate
+    kubectl top nodes
+    
+    # 이벤트 확인
+    kubectl get events -n taskmate --sort-by=.metadata.creationTimestamp
+    ```
+
+  rollback.md: |
+    # 롤백 및 정리 가이드
+
+    ## 서비스별 롤백
+    ```bash
+    # 특정 서비스 재시작
+    kubectl rollout restart deployment/user-service -n taskmate
+    
+    # 롤아웃 상태 확인
+    kubectl rollout status deployment/user-service -n taskmate
+    
+    # 이전 버전으로 롤백
+    kubectl rollout undo deployment/user-service -n taskmate
+    ```
+
+    ## 전체 환경 정리
+    ```bash
+    # TaskMate 네임스페이스 전체 삭제
+    kubectl delete namespace taskmate
+    
+    # Minikube 클러스터 정리
+    minikube delete
+    
+    # 호스트 파일에서 엔트리 제거
+    sudo sed -i '/taskmate.local/d' /etc/hosts
+    ```
+
+    ## 데이터 백업/복원
+    ```bash
+    # PostgreSQL 데이터 백업
+    kubectl exec -it deployment/postgres -n taskmate -- pg_dump -U taskmate user_service_db > user_service_backup.sql
+    
+    # 데이터 복원
+    kubectl exec -i deployment/postgres -n taskmate -- psql -U taskmate user_service_db < user_service_backup.sql
+    ```

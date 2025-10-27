@@ -269,17 +269,44 @@ pod/user-service-xxx                   1/1     Running   0          5m
 
 ### 5. 애플리케이션 접속
 
-#### 포트 포워딩을 통한 접속
+#### 포트 포워딩을 통한 접속 (권장 방법)
+
+**✅ 검증 완료 (2025-10-14)**: 아래 방법으로 모든 서비스 정상 작동 확인
 
 ```bash
-# Frontend Service 포트 포워딩 (권장)
-kubectl port-forward service/frontend-service 3100:3100 -n taskmate
+# 1. 모든 서비스 포트 포워딩 (백그라운드로 실행)
+kubectl port-forward -n taskmate service/frontend-service 3100:3100 &
+kubectl port-forward -n taskmate service/user-service 3000:3000 &
+kubectl port-forward -n taskmate service/task-service 3001:3001 &
+kubectl port-forward -n taskmate service/analytics-service 3002:3002 &
+kubectl port-forward -n taskmate service/file-service 3003:3003 &
 
-# 브라우저에서 접속
+# 2. 브라우저에서 Frontend 접속
 open http://localhost:3100
+
+# 3. 테스트 계정으로 로그인
+# 이메일: testtest@test.test
+# 비밀번호: password123
+# (18개의 샘플 태스크가 이미 생성되어 있음)
 ```
 
-#### Ingress를 통한 접속
+**포트 포워딩 상태 확인:**
+```bash
+# 실행 중인 포트 포워딩 프로세스 확인
+ps aux | grep "kubectl port-forward"
+
+# 특정 포트 사용 확인
+lsof -i :3100  # Frontend
+lsof -i :3000  # User Service
+```
+
+**포트 포워딩 종료:**
+```bash
+# 모든 kubectl port-forward 프로세스 종료
+pkill -f "kubectl port-forward"
+```
+
+#### Ingress를 통한 접속 (대안)
 
 ```bash
 # Minikube IP 확인

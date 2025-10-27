@@ -38,7 +38,7 @@ graph TB
             US[User Service<br/>Port 3000<br/>인증/세션 관리<br/>Pod: user-service-746b75847-8dz4q]
             TS[Task Service<br/>Port 3001<br/>할일 CRUD<br/>Pod: task-service-7c84c6d87c-2d97c]
             AS[Analytics Service<br/>Port 3002<br/>통계/대시보드<br/>Pod: analytics-service-55cc87874-l69tt]
-            FS[File Service<br/>Port 3003<br/>파일 관리 (URL 기반)<br/>Pod: file-service-86bb8b74d6-xq28k]
+            FS[File Service<br/>Port 3003<br/>파일 관리 - URL 기반<br/>Pod: file-service-86bb8b74d6-xq28k]
         end
 
         subgraph "Data Layer"
